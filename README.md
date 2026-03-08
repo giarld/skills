@@ -55,6 +55,35 @@ Optional environment variables:
 - `BILI_COOKIE` (optional, for logged-in access)
 - `BILI_OVERWRITE_COVER` (default: `0`)
 
+### `nano-banana-2`
+
+Generate or edit images through OpenRouter with Gemini image preview.
+
+- Entry files:
+  - `nano-banana-2/SKILL.md`
+  - `nano-banana-2/scripts/generate_image.py`
+  - `nano-banana-2/assets/SYSTEM_TEMPLATE`
+- Supports prompt-only generation, single-image edits, and multi-image composition
+- Accepts up to 14 input images
+- Output: saves image files locally and prints `MEDIA: <path>` for each result
+
+Quick examples:
+
+```bash
+python3 nano-banana-2/scripts/generate_image.py --prompt "A cinematic banana-shaped spaceship landing in a desert" --filename ./images/banana-ship.png
+python3 nano-banana-2/scripts/generate_image.py --prompt "Add a rainbow in the sky, keep everything else unchanged" --input-image ./input.jpg --filename ./images/edit.png
+```
+
+Dependencies:
+
+```bash
+python3 -m pip install -U openai
+```
+
+Required environment variables:
+
+- `OPENROUTER_API_KEY`
+
 ## Repository Layout
 
 ```text
@@ -62,6 +91,10 @@ Optional environment variables:
 ├── README.md
 ├── bilibili-video/
 │   ├── SKILL.md
+│   └── scripts/
+├── nano-banana-2/
+│   ├── SKILL.md
+│   ├── assets/
 │   └── scripts/
 └── remove-background/
     ├── SKILL.md

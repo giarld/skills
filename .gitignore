@@ -1,3 +1,38 @@
+# Skills repository: local artifacts and generated outputs
+.DS_Store
+Thumbs.db
+
+# Local env / secrets
+.env.*
+!.env.example
+!.env.sample
+
+# Editor / workspace settings
+.idea/
+.vscode/
+
+# Common local output folders used by skills and scripts
+tmp/
+temp/
+output/
+outputs/
+artifacts/
+images/
+video/
+downloads/
+
+# Generated media and archives
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
