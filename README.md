@@ -84,6 +84,22 @@ Required environment variables:
 
 - `OPENROUTER_API_KEY`
 
+### `codex-opencode-client`
+
+Define a contract-first workflow for delegating bounded implementation work from Codex to OpenCode.
+
+- Entry files:
+  - `codex-opencode-client/SKILL.md`
+- Supports plain OpenCode and `oh-my-opencode` runtimes
+- Defines contract structure, invocation pattern, acceptance workflow, and audit guidance
+
+Quick use case:
+
+```text
+Use this skill when Codex should delegate a tightly scoped coding task to OpenCode,
+while keeping acceptance, scope control, and final review on the Codex side.
+```
+
 ## Repository Layout
 
 ```text
@@ -92,6 +108,8 @@ Required environment variables:
 ├── bilibili-video/
 │   ├── SKILL.md
 │   └── scripts/
+├── codex-opencode-client/
+│   └── SKILL.md
 ├── nano-banana-2/
 │   ├── SKILL.md
 │   ├── assets/
