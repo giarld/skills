@@ -1,0 +1,149 @@
+\documentclass[a4paper]{article}
+
+% Basic packages
+\newif\ifrenderpdfhasctex
+\newif\ifrenderpdfhastcolorbox
+\IfFileExists{ctex.sty}{
+    \renderpdfhasctextrue
+    \usepackage[fontset=fandol]{ctex}
+}{
+    \renderpdfhasctexfalse
+    \usepackage{fontspec}
+}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{listings}
+\usepackage{hyperref}
+\IfFileExists{tcolorbox.sty}{
+    \renderpdfhastcolorboxtrue
+    \usepackage[most]{tcolorbox}
+}{
+    \renderpdfhastcolorboxfalse
+}
+\IfFileExists{booktabs.sty}{
+    \usepackage{booktabs}
+}{}
+\IfFileExists{subcaption.sty}{
+    \usepackage{subcaption}
+}{}
+\IfFileExists{float.sty}{
+    \usepackage{float}
+}{}
+\IfFileExists{tikz.sty}{
+    \usepackage{tikz}
+}{}
+\IfFileExists{pgfplots.sty}{
+    \usepackage{pgfplots}
+    \pgfplotsset{compat=1.18}
+}{}
+
+% Highlight boxes
+\ifrenderpdfhastcolorbox
+    \newtcolorbox{knowledgebox}[1]{
+        enhanced, colback=blue!5!white, colframe=blue!75!black, colbacktitle=blue!75!black,
+        coltitle=white, fonttitle=\bfseries, title=#1, attach boxed title to top left={yshift=-2mm, xshift=2mm},
+        boxrule=1pt, sharp corners
+    }
+
+    \newtcolorbox{importantbox}[1]{
+        enhanced, colback=yellow!10!white, colframe=yellow!80!black, colbacktitle=yellow!80!black,
+        coltitle=black, fonttitle=\bfseries, title=#1, sharp corners
+    }
+
+    \newtcolorbox{warningbox}[1]{
+        enhanced, colback=red!5!white, colframe=red!75!black, colbacktitle=red!75!black,
+        coltitle=white, fonttitle=\bfseries, title=#1, sharp corners
+    }
+\else
+    \newenvironment{knowledgebox}[1]
+    {\begin{quote}\noindent\textbf{#1}\par}
+    {\end{quote}}
+    \newenvironment{importantbox}[1]
+    {\begin{quote}\noindent\textbf{#1}\par}
+    {\end{quote}}
+    \newenvironment{warningbox}[1]
+    {\begin{quote}\noindent\textbf{#1}\par}
+    {\end{quote}}
+    \newenvironment{tcolorbox}[1][]
+    {\begin{quote}}
+    {\end{quote}}
+\fi
+
+% Listings
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red!60!black},
+    commentstyle=\color{green!60!black},
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b,
+    extendedchars=false
+}
+
+% Front-page metadata
+\newcommand{\doctitle}{[Fill in document title]}
+\newcommand{\docsubtitle}{[Fill in subtitle or document type]}
+\newcommand{\docauthors}{[Fill in author]}
+\newcommand{\docdate}{\today}
+\newcommand{\sourcekind}{[Fill in source type]}
+\newcommand{\sourcesummary}{[Fill in source summary]}
+\newcommand{\sourceurl}{}
+\newcommand{\coverimagepath}{}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+{\Large \docsubtitle\par}
+\vspace{1.2cm}
+{\huge\bfseries \doctitle\par}
+\vspace{0.8cm}
+{\large \docauthors\par}
+\vspace{0.3cm}
+{\large \docdate\par}
+\vspace{1.2cm}
+
+\ifx\coverimagepath\empty
+{\small Set a local cover image path here when a cover is available.\par}
+\else
+\includegraphics[width=0.82\textwidth,height=0.45\textheight,keepaspectratio]{\coverimagepath}\par
+\fi
+
+\vfill
+\begin{tcolorbox}[width=0.9\textwidth, colback=black!2!white, colframe=black!60, sharp corners]
+\textbf{Source Type}: \sourcekind\par
+\textbf{Source Summary}: \sourcesummary\par
+\textbf{Source URL}:
+\ifx\sourceurl\empty
+Not provided
+\else
+\href{\sourceurl}{\nolinkurl{\sourceurl}}
+\fi
+\end{tcolorbox}
+\ifrenderpdfhasctex\else
+\vspace{0.5cm}
+{\small Compiling without `ctex`. For Chinese-heavy documents, install a fuller TeX distribution with CJK support.\par}
+\fi
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%% --- Document body starts here --- %%
+
+% Replace this block with the generated document body.
+% Fill the metadata block above and keep all referenced asset paths valid.
+% Keep images outside knowledgebox/importantbox/warningbox.
+% For source-derived figures that need provenance, add a nearby footnote or
+% explanatory sentence with the origin.
+% End the document with a final section that compresses the main takeaways and
+% any useful next steps or open questions.
+
+%% --- Document body ends here --- %%
+
+\end{document}
