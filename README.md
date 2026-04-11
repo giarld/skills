@@ -7,6 +7,7 @@ Reusable agent skills and helper scripts for common automation workflows.
 | Skill | Purpose | Entry Files | Install |
 | --- | --- | --- | --- |
 | `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/bilibili-video --skill bilibili-video` |
+| `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools` |
 | `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/codex-opencode-client --skill codex-opencode-client` |
 | `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/make-pdf --skill make-pdf` |
 | `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/nano-banana-2 --skill nano-banana-2` |
@@ -45,6 +46,36 @@ Quick examples:
 ```bash
 python3 bilibili-video/scripts/bili_fetch.py "https://www.bilibili.com/video/BVxxxx"
 bilibili-video/scripts/bili_grab.sh "https://www.bilibili.com/video/BVxxxx/"
+```
+
+### `chrome-devtools`
+
+Use Chrome DevTools through MCP for browser automation and debugging.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools
+```
+
+- Entry files:
+  - `chrome-devtools/SKILL.md`
+  - `chrome-devtools/mcp-config.example.json`
+- Features:
+  - browser automation through Chrome DevTools MCP
+  - page snapshots and screenshots
+  - console and network inspection
+  - performance trace and Lighthouse workflows
+- Requirements:
+  - `node`
+  - `npx`
+  - MCP client support
+
+Quick start:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools
+cat chrome-devtools/mcp-config.example.json
 ```
 
 ### `codex-opencode-client`
@@ -177,22 +208,25 @@ python3 -m pip install rembg Pillow
 
 ```text
 .
-├── README.md
-├── bilibili-video/
-│   ├── SKILL.md
-│   └── scripts/
-├── codex-opencode-client/
-│   └── SKILL.md
-├── make-pdf/
-│   ├── SKILL.md
-│   └── assets/
-├── nano-banana-2/
-│   ├── SKILL.md
-│   ├── assets/
-│   └── scripts/
-└── remove-background/
-    ├── SKILL.md
-    └── remove_background.py
+|-- README.md
+|-- bilibili-video/
+|   |-- SKILL.md
+|   `-- scripts/
+|-- chrome-devtools/
+|   |-- SKILL.md
+|   `-- mcp-config.example.json
+|-- codex-opencode-client/
+|   `-- SKILL.md
+|-- make-pdf/
+|   |-- SKILL.md
+|   `-- assets/
+|-- nano-banana-2/
+|   |-- SKILL.md
+|   |-- assets/
+|   `-- scripts/
+`-- remove-background/
+    |-- SKILL.md
+    `-- remove_background.py
 ```
 
 ## Notes
