@@ -4,19 +4,25 @@ Reusable agent skills and helper scripts for common automation workflows.
 
 ## Included Skills
 
-| Skill | Purpose | Entry Files |
-| --- | --- | --- |
-| `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` |
-| `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` |
-| `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` |
-| `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` |
-| `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` |
+| Skill | Purpose | Entry Files | Install |
+| --- | --- | --- | --- |
+| `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/bilibili-video --skill bilibili-video` |
+| `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/codex-opencode-client --skill codex-opencode-client` |
+| `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/make-pdf --skill make-pdf` |
+| `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/nano-banana-2 --skill nano-banana-2` |
+| `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/remove-background --skill remove-background` |
 
 ## Skill Details
 
 ### `bilibili-video`
 
 Fetch and process Bilibili videos by BV id or URL.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/bilibili-video --skill bilibili-video
+```
 
 - Entry files:
   - `bilibili-video/SKILL.md`
@@ -45,6 +51,12 @@ bilibili-video/scripts/bili_grab.sh "https://www.bilibili.com/video/BVxxxx/"
 
 Define a contract-first delegation workflow between Codex and OpenCode.
 
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/codex-opencode-client --skill codex-opencode-client
+```
+
 - Entry files:
   - `codex-opencode-client/SKILL.md`
 - Features:
@@ -62,6 +74,12 @@ OpenCode, while keeping final acceptance and review on the Codex side.
 ### `make-pdf`
 
 Generate a professional LaTeX document and compile it into a final PDF.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/make-pdf --skill make-pdf
+```
 
 - Entry files:
   - `make-pdf/SKILL.md`
@@ -85,6 +103,12 @@ compileable `.tex` file and a polished PDF.
 ### `nano-banana-2`
 
 Generate or edit images through OpenRouter with Gemini image preview.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/nano-banana-2 --skill nano-banana-2
+```
 
 - Entry files:
   - `nano-banana-2/SKILL.md`
@@ -120,6 +144,12 @@ python3 -m pip install -U openai
 ### `remove-background`
 
 Remove image backgrounds for a single file or an entire directory.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills/tree/master/remove-background --skill remove-background
+```
 
 - Entry files:
   - `remove-background/SKILL.md`
