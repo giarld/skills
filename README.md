@@ -6,12 +6,12 @@ Reusable agent skills and helper scripts for common automation workflows.
 
 | Skill | Purpose | Entry Files | Install |
 | --- | --- | --- | --- |
-| `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/bilibili-video --skill bilibili-video` |
-| `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools` |
-| `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/codex-opencode-client --skill codex-opencode-client` |
-| `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/make-pdf --skill make-pdf` |
-| `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/nano-banana-2 --skill nano-banana-2` |
-| `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills/tree/master/remove-background --skill remove-background` |
+| `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill bilibili-video` |
+| `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill chrome-devtools` |
+| `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
+| `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
+| `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
+| `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill remove-background` |
 
 ## Skill Details
 
@@ -22,7 +22,7 @@ Fetch and process Bilibili videos by BV id or URL.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/bilibili-video --skill bilibili-video
+npx skills add https://github.com/giarld/skills --skill bilibili-video
 ```
 
 - Entry files:
@@ -55,7 +55,7 @@ Use Chrome DevTools through MCP for browser automation and debugging.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools
+npx skills add https://github.com/giarld/skills --skill chrome-devtools
 ```
 
 - Entry files:
@@ -74,7 +74,7 @@ npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --sk
 Quick start:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/chrome-devtools --skill chrome-devtools
+npx skills add https://github.com/giarld/skills --skill chrome-devtools
 cat chrome-devtools/mcp-config.example.json
 ```
 
@@ -85,7 +85,7 @@ Define a contract-first delegation workflow between Codex and OpenCode.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/codex-opencode-client --skill codex-opencode-client
+npx skills add https://github.com/giarld/skills --skill codex-opencode-client
 ```
 
 - Entry files:
@@ -109,7 +109,7 @@ Generate a professional LaTeX document and compile it into a final PDF.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/make-pdf --skill make-pdf
+npx skills add https://github.com/giarld/skills --skill make-pdf
 ```
 
 - Entry files:
@@ -138,7 +138,7 @@ Generate or edit images through OpenRouter with Gemini image preview.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/nano-banana-2 --skill nano-banana-2
+npx skills add https://github.com/giarld/skills --skill nano-banana-2
 ```
 
 - Entry files:
@@ -179,7 +179,7 @@ Remove image backgrounds for a single file or an entire directory.
 - Install:
 
 ```bash
-npx skills add https://github.com/giarld/skills/tree/master/remove-background --skill remove-background
+npx skills add https://github.com/giarld/skills --skill remove-background
 ```
 
 - Entry files:
