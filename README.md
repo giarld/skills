@@ -11,6 +11,7 @@ Reusable agent skills and helper scripts for common automation workflows.
 | `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
 | `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
 | `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
+| `openrouter-video-gen` | Generate videos through OpenRouter with model discovery, async polling, and download helpers | `openrouter-video-gen/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill openrouter-video-gen` |
 | `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill remove-background` |
 
 ## Skill Details
@@ -172,6 +173,49 @@ Dependencies:
 python3 -m pip install -U openai
 ```
 
+### `openrouter-video-gen`
+
+Generate videos through OpenRouter's asynchronous video API.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills --skill openrouter-video-gen
+```
+
+- Entry files:
+  - `openrouter-video-gen/SKILL.md`
+  - `openrouter-video-gen/scripts/list_video_models.py`
+  - `openrouter-video-gen/scripts/generate_video.py`
+  - `openrouter-video-gen/references/openrouter-video-generation.md`
+- Features:
+  - list current video-capable models from OpenRouter
+  - submit async text-to-video jobs
+  - support image-to-video via `frame_images`
+  - support reference-to-video via `input_references`
+  - poll job status and download generated video files
+- Required environment variables:
+  - `OPENROUTER_VIDEO_API_KEY`
+
+Quick examples:
+
+```bash
+python3 openrouter-video-gen/scripts/list_video_models.py
+
+python3 openrouter-video-gen/scripts/generate_video.py \
+  --model google/veo-3.1 \
+  --prompt "A cinematic aerial shot of mist rolling through steep green mountains at sunrise" \
+  --resolution 720p \
+  --aspect-ratio 16:9 \
+  --filename ./outputs/mountains.mp4
+```
+
+Dependencies:
+
+```bash
+python3 --version
+```
+
 ### `remove-background`
 
 Remove image backgrounds for a single file or an entire directory.
@@ -223,6 +267,10 @@ python3 -m pip install rembg Pillow
 |-- nano-banana-2/
 |   |-- SKILL.md
 |   |-- assets/
+|   `-- scripts/
+|-- openrouter-video-gen/
+|   |-- SKILL.md
+|   |-- references/
 |   `-- scripts/
 `-- remove-background/
     |-- SKILL.md
