@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import mimetypes
 import os
 import sys
 import time
@@ -72,6 +73,18 @@ def append_image(items: list[dict], url: str | None, frame_type: str | None = No
     items.append(item)
 
 
+def file_to_data_url(path_str: str) -> str:
+    path = Path(path_str)
+    mime_type, _ = mimetypes.guess_type(path.name)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+    encoded = path.read_bytes().hex()
+    # Convert from hex to base64 through bytes to keep the implementation stdlib-only.
+    import base64
+
+    return f"data:{mime_type};base64,{base64.b64encode(bytes.fromhex(encoded)).decode('ascii')}"
+
+
 def build_payload(args: argparse.Namespace) -> dict:
     payload: dict[str, object] = {
         "model": args.model,
@@ -88,6 +101,8 @@ def build_payload(args: argparse.Namespace) -> dict:
 
     frame_images: list[dict] = []
     append_image(frame_images, args.first_frame_url, "first_frame")
+    if args.first_frame_file:
+        append_image(frame_images, file_to_data_url(args.first_frame_file), "first_frame")
     append_image(frame_images, args.last_frame_url, "last_frame")
     if frame_images:
         payload["frame_images"] = frame_images
@@ -145,6 +160,7 @@ def parse_args() -> argparse.Namespace:
         help="Disable audio generation.",
     )
     parser.add_argument("--first-frame-url", help="URL for frame_images first_frame.")
+    parser.add_argument("--first-frame-file", help="Local file for frame_images first_frame.")
     parser.add_argument("--last-frame-url", help="URL for frame_images last_frame.")
     parser.add_argument(
         "--reference-url",
