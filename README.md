@@ -83,6 +83,7 @@ cat chrome-devtools/mcp-config.example.json
 ### `hermes-agent-api`
 
 Call a Hermes Agent API server over its OpenAI-compatible HTTP interface.
+Official docs: [Hermes API Server user guide (zh-Hans)](https://hermes-agent.nousresearch.com/docs/zh-Hans/user-guide/features/api-server).
 
 - Install:
 
