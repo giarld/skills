@@ -1,0 +1,7 @@
+interface:
+  display_name: "Hermes Agent API"
+  short_description: "Call Hermes API and manage agent runs"
+  default_prompt: "Use $hermes-agent-api to call the configured Hermes server and return the result."
+
+policy:
+  allow_implicit_invocation: true

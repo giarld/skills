@@ -8,6 +8,7 @@ Reusable agent skills and helper scripts for common automation workflows.
 | --- | --- | --- | --- |
 | `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill bilibili-video` |
 | `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill chrome-devtools` |
+| `hermes-agent-api` | Call a Hermes Agent API server over its OpenAI-compatible HTTP interface for chat, responses, and long-running jobs | `hermes-agent-api/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill hermes-agent-api` |
 | `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
 | `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
 | `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
@@ -77,6 +78,40 @@ Quick start:
 ```bash
 npx skills add https://github.com/giarld/skills --skill chrome-devtools
 cat chrome-devtools/mcp-config.example.json
+```
+
+### `hermes-agent-api`
+
+Call a Hermes Agent API server over its OpenAI-compatible HTTP interface.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills --skill hermes-agent-api
+```
+
+- Entry files:
+  - `hermes-agent-api/SKILL.md`
+  - `hermes-agent-api/scripts/hermes_api.py`
+  - `hermes-agent-api/references/api.md`
+- Features:
+  - health check, list models, and inspect capabilities
+  - send prompts via Chat Completions (`/v1/chat/completions`)
+  - send prompts via Responses API (`/v1/responses`) with conversation continuity
+  - submit and poll long-running jobs via `/v1/runs`
+  - support `--raw` for debugging response bodies
+- Required environment variables:
+  - `HERMES_BASE_URL`
+  - `HERMES_API_KEY`
+  - `HERMES_MODEL`
+
+Quick examples:
+
+```bash
+python hermes-agent-api/scripts/hermes_api.py health
+python hermes-agent-api/scripts/hermes_api.py chat --prompt "Reply with exactly: pong"
+python hermes-agent-api/scripts/hermes_api.py response --input "What files are in this project?"
+python hermes-agent-api/scripts/hermes_api.py run --input "Inspect the repo and propose a refactor plan." --wait
 ```
 
 ### `codex-opencode-client`
@@ -261,6 +296,10 @@ python3 -m pip install rembg Pillow
 |   `-- mcp-config.example.json
 |-- codex-opencode-client/
 |   `-- SKILL.md
+|-- hermes-agent-api/
+|   |-- SKILL.md
+|   |-- references/
+|   `-- scripts/
 |-- make-pdf/
 |   |-- SKILL.md
 |   `-- assets/
