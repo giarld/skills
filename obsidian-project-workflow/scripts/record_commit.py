@@ -82,8 +82,9 @@ def detect_vcs(repo_path: Path) -> str:
     raise RuntimeError("cannot detect git or svn repository; pass --vcs manual with commit metadata")
 
 
-def read_git_commit(repo_path: Path) -> dict[str, str]:
-    output = run_command(["git", "log", "-1", "--pretty=format:%H%x09%an%x09%cI%x09%s"], repo_path)
+def read_git_commit(repo_path: Path, commit_ref: str | None = None) -> dict[str, str]:
+    ref = commit_ref.strip() if commit_ref else "HEAD"
+    output = run_command(["git", "show", "-s", "--pretty=format:%H%x09%an%x09%cI%x09%s", ref], repo_path)
     commit_id, author, committed_at, message = output.split("\t", 3)
     return {
         "vcs": "git",
@@ -91,16 +92,21 @@ def read_git_commit(repo_path: Path) -> dict[str, str]:
         "author": author,
         "message": message,
         "time": committed_at,
-        "source": "git/log",
+        "source": "git/show",
     }
 
 
-def read_svn_commit(repo_path: Path) -> dict[str, str]:
-    revision = run_command(["svn", "info", "--show-item", "revision"], repo_path, encoding=None)
-    author = run_command(["svn", "info", "--show-item", "last-changed-author"], repo_path, encoding=None)
-    committed_at = run_command(["svn", "info", "--show-item", "last-changed-date"], repo_path, encoding=None)
+def read_svn_commit(repo_path: Path, revision_ref: str | None = None) -> dict[str, str]:
+    revision = (
+        revision_ref.strip().lstrip("r")
+        if revision_ref
+        else run_command(["svn", "info", "--show-item", "revision"], repo_path, encoding=None)
+    )
     log_output = run_command(["svn", "log", "-r", revision], repo_path, encoding=None)
     log_lines = [line for line in log_output.splitlines() if not line.startswith("-----")]
+    metadata = [cell.strip() for cell in log_lines[0].split("|")] if log_lines else []
+    author = metadata[1] if len(metadata) > 1 else ""
+    committed_at = metadata[2] if len(metadata) > 2 else ""
     message_lines = log_lines[2:] if len(log_lines) > 2 else []
     message = " ".join(line.strip() for line in message_lines if line.strip())
     return {
@@ -109,7 +115,7 @@ def read_svn_commit(repo_path: Path) -> dict[str, str]:
         "author": author,
         "message": message,
         "time": committed_at,
-        "source": "svn/info",
+        "source": "svn/log",
     }
 
 
@@ -183,7 +189,7 @@ def main() -> int:
     parser.add_argument("--note-path", help="Task note path, absolute or vault-relative. Overrides --title filename inference.")
     parser.add_argument("--vcs", choices=["auto", "git", "svn", "manual"], default="auto")
     parser.add_argument("--repo-path", default=".", help="Code repository path for git/svn auto-read.")
-    parser.add_argument("--commit", help="Manual commit hash or svn revision.")
+    parser.add_argument("--commit", help="Commit hash/ref or svn revision to record. Required for manual records; optional for git/svn.")
     parser.add_argument("--message", help="Manual commit message.")
     parser.add_argument("--author", help="Manual commit author.")
     parser.add_argument("--time", help="Manual commit time.")
@@ -201,9 +207,9 @@ def main() -> int:
     repo_path = Path(args.repo_path).expanduser().resolve()
     vcs = detect_vcs(repo_path) if args.vcs == "auto" else args.vcs
     if vcs == "git":
-        commit = read_git_commit(repo_path)
+        commit = read_git_commit(repo_path, args.commit)
     elif vcs == "svn":
-        commit = read_svn_commit(repo_path)
+        commit = read_svn_commit(repo_path, args.commit)
     else:
         commit = manual_commit(args)
 

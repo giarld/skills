@@ -57,6 +57,7 @@ python3 scripts/move_task.py --project-name "项目名称" --title "登录流程
 
 ```bash
 python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo"
+python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo" --commit "<hash>"
 ```
 
 Windows 环境中建议使用 `python`，处理中文项目名或任务名时设置 `PYTHONUTF8=1`。
@@ -150,6 +151,13 @@ flowchart TB
 - 测试、截图、日志或其它验收证据
 
 每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会自动增加 `review_rounds` 并重置 `review_issues_closed: false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据、`review_rounds >= 3`，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
+
+Review 完成后的提交策略：
+
+- 任务已通过 Review 且满足完成门禁时，先向人类确认是否提交。人类确认后再执行提交，记录刚创建的提交记录，然后移动到 `完成`。
+- 如果人类拒绝提交，停止处理，不移动到 `完成`。
+- 如果人类已经主动提交，并说明任务可以移动到 `完成`，只有在人类提供 commit id/revision 时才关联该提交并完成任务；不要用仓库最新提交推断任务提交。
+- 如果人类明确说明不需要记录提交记录，可使用 `scripts/move_task.py --skip-commit-record` 直接完成任务，脚本会在 frontmatter 中写入 `commit_record_skipped: true`。
 
 ## Vault 结构
 

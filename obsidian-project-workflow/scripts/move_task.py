@@ -317,6 +317,7 @@ def build_note_content_for_move(
     note_path: Path,
     source_column: str | None,
     to_column: str,
+    skip_commit_record: bool = False,
 ) -> str | None:
     if not note_path.exists():
         return None
@@ -334,6 +335,10 @@ def build_note_content_for_move(
     next_content = update_status_in_content(updated, to_column)
     if next_content is not None:
         updated = next_content
+    if to_column == "完成" and skip_commit_record:
+        next_content = set_frontmatter_values_in_content(updated, {"commit_record_skipped": "true"})
+        if next_content is not None:
+            updated = next_content
     if updated == original:
         return None
     return updated
@@ -412,9 +417,12 @@ def move_task(
     to_column: str,
     board_name: str | None,
     require_commit: bool = False,
+    skip_commit_record: bool = False,
 ) -> tuple[Path, Path]:
     if to_column not in VALID_COLUMNS:
         raise ValueError(f"invalid column: {to_column}")
+    if require_commit and skip_commit_record:
+        raise ValueError("--require-commit and --skip-commit-record cannot be used together")
 
     project_name = safe_project_name(project_name)
     note_name = safe_note_name(title)
@@ -427,7 +435,7 @@ def move_task(
     board, card, card_target, source_column = remove_card(board, expected_target, note_name, title)
     note_path = resolve_note_path_from_card(vault_path, project_root, project_name, card_target, note_name)
 
-    should_require_commit = require_commit or frontmatter_bool(note_path, "requires_commit")
+    should_require_commit = (require_commit or frontmatter_bool(note_path, "requires_commit")) and not skip_commit_record
     if to_column == "完成" and should_require_commit:
         require_commit_chain_for_done(note_path, title)
 
@@ -436,7 +444,7 @@ def move_task(
         require_review_gate_for_done(note_path, title)
 
     board = insert_card(board, to_column, card)
-    note_content = build_note_content_for_move(note_path, source_column, to_column)
+    note_content = build_note_content_for_move(note_path, source_column, to_column, skip_commit_record)
     write_board_and_note(board_path, board, note_path, note_content)
     return note_path, board_path
 
@@ -449,6 +457,7 @@ def main() -> int:
     parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
     parser.add_argument("--to-column", required=True, choices=sorted(VALID_COLUMNS))
     parser.add_argument("--require-commit", action="store_true", help="Require a recorded commit id/hash or svn revision before moving to 完成.")
+    parser.add_argument("--skip-commit-record", action="store_true", help="Skip commit-record gate only when the human explicitly says no commit record is needed.")
     args = parser.parse_args()
 
     note_path, board_path = move_task(
@@ -458,6 +467,7 @@ def main() -> int:
         args.to_column,
         args.board_name,
         args.require_commit,
+        args.skip_commit_record,
     )
     print(note_path)
     print(board_path)

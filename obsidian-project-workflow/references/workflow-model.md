@@ -59,6 +59,7 @@ Every handoff should state current state, desired outcome, inputs, constraints, 
 Do not move a card from `Review` to `完成` unless:
 
 - The task's commit chain is complete when code was submitted and the task has `requires_commit: true` or the move command uses `--require-commit`. If `提交记录` lacks a commit id/hash or svn revision, ask the user for the commit id before moving the card.
+- If the human explicitly says no commit record is needed, the card may move to `完成` with `scripts/move_task.py --skip-commit-record`, which records `commit_record_skipped: true`.
 - The review conclusion is explicit.
 - `review_rounds` is at least 3.
 - `review_issues_closed` is true.
@@ -73,6 +74,9 @@ When code is submitted during task execution, record it in `## 提交记录`.
 - Git: record commit hash, author, and message.
 - SVN: record revision, author, and message.
 - Manual user commit: if the user says they committed manually, record the commit hash/revision/message they provide and mark source as `user/manual`. Manual records must include a commit hash or revision.
+- After Review passes, ask the human whether to submit/commit before creating a commit. If the human confirms, create the commit, record that exact commit, then move the task to `完成`. If the human refuses, stop.
+- If the human already submitted code and says the task can move to `完成`, record only the commit id/revision the human provides. Do not infer the task commit from the repository's latest commit.
+- If the human explicitly says no commit record is needed, skip commit recording and complete the task.
 - Do not run commit commands solely for logging; logging records existing or user-provided submission metadata.
 
 ## Knowledge indexing
