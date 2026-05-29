@@ -14,7 +14,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 ASSETS = SKILL_ROOT / "assets"
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-DEFAULT_BOARD_NAME = "项目任务看板.md"
+DEFAULT_BOARD_NAME = "任务看板.md"
 
 
 def read_text(path: Path) -> str:

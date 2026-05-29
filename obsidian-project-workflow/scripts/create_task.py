@@ -16,7 +16,7 @@ ASSETS = SKILL_ROOT / "assets"
 VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Archive"}
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-DEFAULT_BOARD_NAME = "项目任务看板.md"
+DEFAULT_BOARD_NAME = "任务看板.md"
 
 
 def safe_project_name(name: str) -> str:

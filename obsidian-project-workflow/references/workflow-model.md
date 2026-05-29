@@ -21,6 +21,8 @@ Load this reference only for task creation, planning, multi-agent handoff, revie
 - Acceptance criteria: checkable statements.
 - Dependencies and risks: links to related notes or blockers.
 - Execution log: timestamped activity.
+- Commit log: git/svn/manual submission metadata when code is committed during the task.
+- Commit gate: set `requires_commit: true` only for tasks that must produce code submissions.
 - Review: reviewer findings and disposition.
 - Evidence: tests, screenshots, logs, or links proving completion.
 
@@ -28,7 +30,7 @@ Load this reference only for task creation, planning, multi-agent handoff, revie
 
 1. Capture ideas in `需求池`: concise card, source/problem/value/unknowns in a linked task note when analysis is needed.
 2. Analyze to `待执行`: scope, constraints, dependencies, acceptance criteria, and proposed breakdown are clear.
-3. Execute in `执行中`: owner or agent role assigned; decisions, commands, outputs, changed files, and questions recorded.
+3. Execute in `执行中`: owner or agent role assigned; decisions, commands, outputs, changed files, commit metadata, and questions recorded.
 4. Review in `Review`: reviewer, focus, changed artifacts, evidence, and findings recorded. Return to `执行中` if fixes are required.
 5. Complete/archive: move to `完成` only when acceptance criteria and evidence exist; move stale or historical records to `Archive`.
 
@@ -55,10 +57,20 @@ Every handoff should state current state, desired outcome, inputs, constraints, 
 
 Do not move a card from `Review` to `完成` unless:
 
+- The task's commit chain is complete when code was submitted and the task has `requires_commit: true` or the move command uses `--require-commit`. If `提交记录` lacks a commit id/hash or svn revision, ask the user for the commit id before moving the card.
 - The review conclusion is explicit.
 - Required fixes are complete or intentionally deferred.
 - Acceptance criteria are checked or updated with a reason.
 - Evidence is linked or summarized in the task note.
+
+## Commit recording
+
+When code is submitted during task execution, record it in `## 提交记录`.
+
+- Git: record commit hash, author, and message.
+- SVN: record revision, author, and message.
+- Manual user commit: if the user says they committed manually, record the commit hash/revision/message they provide and mark source as `user/manual`. Manual records must include a commit hash or revision.
+- Do not run commit commands solely for logging; logging records existing or user-provided submission metadata.
 
 ## Knowledge indexing
 

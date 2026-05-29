@@ -13,8 +13,7 @@ Obsidian is the source of truth. Use `obsidian` CLI first; use helper scripts on
 
 ```bash
 obsidian search query="任务看板" limit=20
-obsidian read path="项目名称/任务/项目任务看板.md"
-obsidian read path="项目名称/任务/研发任务看板.md"
+obsidian read path="项目名称/任务/任务看板.md"
 obsidian backlinks path="项目名称/任务/Tasks/任务标题.md"
 ```
 
@@ -33,9 +32,11 @@ If evidence is absent, say `未看到验收/测试证据`; do not infer it.
 **Write/scaffold operations**: use scripts from this skill directory:
 
 ```bash
-python3 scripts/init_project.py --project-name "项目名称" --board-name "研发任务看板.md"
-python3 scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "研发任务看板.md"
-python3 scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "研发任务看板.md"
+python3 scripts/init_project.py --project-name "项目名称" --board-name "任务看板.md"
+python3 scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "任务看板.md"
+python3 scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "任务看板.md"
+python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo"
+python3 scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "完成" --require-commit
 ```
 
 On Windows use `python`; set `PYTHONUTF8=1` for non-ASCII names.
@@ -70,7 +71,7 @@ Board columns:
 需求池 -> 待执行 -> 执行中 -> Review -> 完成 -> Archive
 ```
 
-`项目任务看板.md` is only the default board name. Any single-file name matching `*任务看板.md` is valid, such as `研发任务看板.md`. If multiple boards exist, pass `--board-name`.
+`任务看板.md` is only the default board name. Any single-file name matching `*任务看板.md` is valid. If multiple boards exist, pass `--board-name`.
 
 ## Resources
 
@@ -79,6 +80,7 @@ Board columns:
 - `scripts/init_project.py`: scaffold project folders and board.
 - `scripts/create_task.py`: create task note and board card.
 - `scripts/move_task.py`: move card and update note status.
+- `scripts/record_commit.py`: append git/svn/manual commit metadata to a task note.
 - `scripts/resolve_vault.py`: print resolved vault root.
 - Read `references/obsidian-cli-quickref.md` only for CLI syntax.
 - Read `references/workflow-model.md` only for detailed workflow gates, multi-agent handoffs, or review/acceptance rules.
@@ -89,4 +91,9 @@ Board columns:
 - Keep `new-note-folder` pointed at `项目名称/任务/Tasks`.
 - Use wikilinks for vault-local links.
 - Create/link task notes for non-trivial cards.
+- Record code submission metadata in the task note's `提交记录`: git hash, svn revision, commit author/message, or user-provided manual commit info.
+- If the user says they manually committed code, capture the commit message/revision/hash they provide and record it; do not invent missing values.
+- For code tasks, set `requires_commit: true` in the task note or pass `--require-commit` when moving to `完成`.
+- Before moving a code task to `完成`, check `提交记录`. If the commit chain lacks a commit id/hash or svn revision, stop and ask the user for it, then record it with `scripts/record_commit.py`.
+- Do not require commit metadata for non-code tasks.
 - Before completing a write operation, verify the board changed in the resolved vault, not the session directory.

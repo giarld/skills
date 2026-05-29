@@ -243,9 +243,9 @@ Quick examples:
 
 ```bash
 obsidian search query="任务看板" limit=20
-python3 obsidian-project-workflow/scripts/init_project.py --project-name "项目名称" --board-name "研发任务看板.md"
-python3 obsidian-project-workflow/scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "研发任务看板.md"
-python3 obsidian-project-workflow/scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "研发任务看板.md"
+python3 obsidian-project-workflow/scripts/init_project.py --project-name "项目名称" --board-name "任务看板.md"
+python3 obsidian-project-workflow/scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "任务看板.md"
+python3 obsidian-project-workflow/scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "任务看板.md"
 ```
 
 On Windows, use `python` and set `PYTHONUTF8=1` when working with non-ASCII project or task names.

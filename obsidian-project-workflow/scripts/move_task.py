@@ -15,7 +15,7 @@ VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Arc
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]*)?\]\]")
-DEFAULT_BOARD_NAME = "项目任务看板.md"
+DEFAULT_BOARD_NAME = "任务看板.md"
 
 
 def safe_project_name(name: str) -> str:
@@ -167,7 +167,70 @@ def update_status(note_path: Path, status: str) -> None:
     write_utf8(note_path, "\n".join(lines).rstrip() + "\n")
 
 
-def move_task(vault_path: Path, project_name: str, title: str, to_column: str, board_name: str | None) -> tuple[Path, Path]:
+def frontmatter_bool(note_path: Path, key: str) -> bool:
+    if not note_path.exists():
+        return False
+
+    lines = note_path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0] != "---":
+        return False
+
+    for index in range(1, len(lines)):
+        if lines[index] == "---":
+            return False
+        if not lines[index].startswith(f"{key}:"):
+            continue
+        value = lines[index].split(":", 1)[1].strip().strip("'\"").lower()
+        return value in {"true", "yes", "1", "on"}
+    return False
+
+
+def commit_chain_complete(note_path: Path) -> bool:
+    if not note_path.exists():
+        return False
+
+    lines = note_path.read_text(encoding="utf-8").splitlines()
+    try:
+        start = lines.index("## 提交记录") + 1
+    except ValueError:
+        return False
+
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+
+    for line in lines[start:end]:
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        commit_id = cells[2]
+        if commit_id and commit_id not in {"提交", "---"} and not set(commit_id) <= {"-"}:
+            return True
+    return False
+
+
+def require_commit_chain_for_done(note_path: Path, title: str) -> None:
+    if commit_chain_complete(note_path):
+        return
+    raise ValueError(
+        "commit chain incomplete; ask the user for the commit id/hash or svn revision for "
+        f"task '{title}', record it with scripts/record_commit.py, then move the task to 完成."
+    )
+
+
+def move_task(
+    vault_path: Path,
+    project_name: str,
+    title: str,
+    to_column: str,
+    board_name: str | None,
+    require_commit: bool = False,
+) -> tuple[Path, Path]:
     if to_column not in VALID_COLUMNS:
         raise ValueError(f"invalid column: {to_column}")
 
@@ -177,6 +240,10 @@ def move_task(vault_path: Path, project_name: str, title: str, to_column: str, b
     board_path = resolve_board_path(project_root, board_name)
     note_path = project_root / "任务" / "Tasks" / f"{note_name}.md"
     expected_target = f"{project_name}/任务/Tasks/{note_name}"
+
+    should_require_commit = require_commit or frontmatter_bool(note_path, "requires_commit")
+    if to_column == "完成" and should_require_commit:
+        require_commit_chain_for_done(note_path, title)
 
     board = board_path.read_text(encoding="utf-8")
     board, card = remove_card(board, expected_target)
@@ -193,9 +260,17 @@ def main() -> int:
     parser.add_argument("--title", required=True)
     parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
     parser.add_argument("--to-column", required=True, choices=sorted(VALID_COLUMNS))
+    parser.add_argument("--require-commit", action="store_true", help="Require a recorded commit id/hash or svn revision before moving to 完成.")
     args = parser.parse_args()
 
-    note_path, board_path = move_task(resolve_vault_path(args.vault_path), args.project_name, args.title, args.to_column, args.board_name)
+    note_path, board_path = move_task(
+        resolve_vault_path(args.vault_path),
+        args.project_name,
+        args.title,
+        args.to_column,
+        args.board_name,
+        args.require_commit,
+    )
     print(note_path)
     print(board_path)
     return 0
