@@ -8,13 +8,13 @@ import datetime as dt
 import re
 from pathlib import Path
 
+from board_utils import card_matches_task
 from vault_utils import resolve_vault_path
 
 
 VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Archive"}
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]*)?\]\]")
 DEFAULT_BOARD_NAME = "任务看板.md"
 
 
@@ -92,34 +92,17 @@ def insert_card(board: str, column: str, card_line: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def normalize_wikilink_target(target: str) -> str:
-    normalized = target.strip().replace("\\", "/")
-    if normalized.endswith(".md"):
-        normalized = normalized[:-3]
-    return re.sub(r"/+", "/", normalized)
-
-
-def card_links_to_target(line: str, expected_target: str) -> bool:
-    expected = normalize_wikilink_target(expected_target)
-    for match in WIKILINK_RE.finditer(line):
-        if normalize_wikilink_target(match.group(1)) == expected:
-            return True
-    return False
-
-
-def remove_card(board: str, expected_target: str) -> tuple[str, str]:
+def remove_card(board: str, expected_target: str, note_name: str, title: str) -> tuple[str, str]:
     lines = board.splitlines()
     removed = ""
     kept: list[str] = []
     for line in lines:
-        stripped = line.strip()
-        is_card = stripped.startswith("-") and "[[" in stripped
-        if is_card and card_links_to_target(line, expected_target) and not removed:
+        if not removed and card_matches_task(line, expected_target, note_name, title):
             removed = line
             continue
         kept.append(line)
     if not removed:
-        raise ValueError(f"task card not found: {expected_target}")
+        raise ValueError(f"task card not found: {expected_target} or {note_name}")
     return "\n".join(kept).rstrip() + "\n", removed
 
 
@@ -246,7 +229,7 @@ def move_task(
         require_commit_chain_for_done(note_path, title)
 
     board = board_path.read_text(encoding="utf-8")
-    board, card = remove_card(board, expected_target)
+    board, card = remove_card(board, expected_target, note_name, title)
     board = insert_card(board, to_column, card)
     write_utf8(board_path, board)
     update_status(note_path, to_column)

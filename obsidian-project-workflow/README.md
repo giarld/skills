@@ -169,6 +169,7 @@ flowchart TB
 - `SKILL.md`: agent 使用本 skill 时遵循的主指令。
 - `assets/kanban-template.md`: Kanban 看板模板。
 - `assets/task-note-template.md`: 任务笔记模板。
+- `scripts/board_utils.py`: 共享的 Kanban 卡片匹配工具。
 - `scripts/init_project.py`: 初始化项目目录和看板。
 - `scripts/create_task.py`: 创建任务笔记和看板卡片。
 - `scripts/move_task.py`: 移动任务卡片并同步任务状态。

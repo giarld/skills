@@ -41,6 +41,10 @@ python3 scripts/move_task.py --project-name "项目名称" --title "登录流程
 
 On Windows use `python`; set `PYTHONUTF8=1` for non-ASCII names.
 
+For existing boards, keep their current card link style when moving cards. The helper scripts understand full-path wikilinks, short wikilinks, aliased wikilinks, and exact plain-text task cards; if a board uses another Kanban-compatible card shape, read the board first and preserve the surrounding Markdown instead of forcing a format migration.
+
+If an existing task note filename differs from the task title, pass `--note-path` to `scripts/record_commit.py` instead of relying on title-to-filename inference.
+
 ## Vault And Paths
 
 - `obsidian` CLI targets the most recently focused vault by default; use `vault=<name>` only when the user specifies a vault.
@@ -77,6 +81,7 @@ Board columns:
 
 - `assets/kanban-template.md`: board template.
 - `assets/task-note-template.md`: task note template.
+- `scripts/board_utils.py`: shared Kanban card matching helpers.
 - `scripts/init_project.py`: scaffold project folders and board.
 - `scripts/create_task.py`: create task note and board card.
 - `scripts/move_task.py`: move card and update note status.

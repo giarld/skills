@@ -8,6 +8,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
+from board_utils import board_has_task_card
 from vault_utils import resolve_vault_path
 
 
@@ -151,8 +152,10 @@ def create_task(
         write_utf8(note_path, content)
 
     card = f"- [ ] [[{project_name}/任务/Tasks/{note_name}|{title}]]"
+    expected_target = f"{project_name}/任务/Tasks/{note_name}"
     board = board_path.read_text(encoding="utf-8")
-    write_utf8(board_path, insert_card(board, column, card))
+    if not board_has_task_card(board, expected_target, note_name, title):
+        write_utf8(board_path, insert_card(board, column, card))
     return note_path, board_path
 
 

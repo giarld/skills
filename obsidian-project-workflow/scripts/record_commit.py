@@ -164,11 +164,23 @@ def append_commit(note_path: Path, commit: dict[str, str]) -> None:
         file.write("\n".join(lines).rstrip() + "\n")
 
 
+def resolve_note_path(vault_path: Path, project_name: str, title: str, note_path: str | None) -> Path:
+    if note_path:
+        path = Path(note_path).expanduser()
+        if path.is_absolute():
+            return path.resolve()
+        return (vault_path / path).resolve()
+
+    note_name = safe_note_name(title)
+    return vault_path / project_name / "任务" / "Tasks" / f"{note_name}.md"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vault-path", help="Path to the Obsidian vault root. Defaults to the active Obsidian vault.")
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--title", required=True)
+    parser.add_argument("--note-path", help="Task note path, absolute or vault-relative. Overrides --title filename inference.")
     parser.add_argument("--vcs", choices=["auto", "git", "svn", "manual"], default="auto")
     parser.add_argument("--repo-path", default=".", help="Code repository path for git/svn auto-read.")
     parser.add_argument("--commit", help="Manual commit hash or svn revision.")
@@ -181,9 +193,8 @@ def main() -> int:
         parser.error("--commit is required when --vcs manual")
 
     project_name = safe_project_name(args.project_name)
-    note_name = safe_note_name(args.title)
     vault_path = resolve_vault_path(args.vault_path)
-    note_path = vault_path / project_name / "任务" / "Tasks" / f"{note_name}.md"
+    note_path = resolve_note_path(vault_path, project_name, args.title, args.note_path)
     if not note_path.exists():
         raise FileNotFoundError(f"task note not found: {note_path}")
 

@@ -223,9 +223,11 @@ npx skills add https://github.com/giarld/skills --skill obsidian-project-workflo
 - Entry files:
   - `obsidian-project-workflow/SKILL.md`
   - `obsidian-project-workflow/README.md`
+  - `obsidian-project-workflow/scripts/board_utils.py`
   - `obsidian-project-workflow/scripts/init_project.py`
   - `obsidian-project-workflow/scripts/create_task.py`
   - `obsidian-project-workflow/scripts/move_task.py`
+  - `obsidian-project-workflow/scripts/record_commit.py`
   - `obsidian-project-workflow/scripts/resolve_vault.py`
   - `obsidian-project-workflow/references/obsidian-cli-quickref.md`
   - `obsidian-project-workflow/references/workflow-model.md`
