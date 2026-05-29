@@ -6,6 +6,8 @@ owner: ""
 agent_role: ""
 priority: ""
 requires_commit: false
+review_rounds: 0
+review_issues_closed: false
 created: "{{DATE}}"
 updated: "{{DATE}}"
 tags:

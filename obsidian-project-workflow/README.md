@@ -91,8 +91,8 @@ flowchart LR
     idea["需求池<br/>想法、需求、Bug"]
     ready["待执行<br/>范围、负责人、验收标准明确"]
     doing["执行中<br/>实现、记录决策和证据"]
-    review["Review<br/>检查变更和验收材料"]
-    done["完成<br/>验收通过"]
+    review["Review<br/>检查变更和验收材料<br/>累计 review_rounds"]
+    done["完成<br/>三轮 Review 且问题收口"]
     archive["Archive<br/>历史或关闭事项"]
     rejected["Archive<br/>拒绝、过期或暂不处理"]
 
@@ -102,7 +102,7 @@ flowchart LR
     doing -->|"产出交付物和证据"| review
     review -->|"需要修改"| doing
     review -->|"Review 通过"| gate{"完成门禁"}
-    gate -->|"Review 结论 + 验收证据"| done
+    gate -->|"review_rounds >= 3 + review_issues_closed"| done
     gate -->|"代码任务还需提交记录"| commit["提交记录<br/>git hash / svn revision / manual id"]
     commit --> done
     done -->|"不再需要跟踪"| archive
@@ -118,7 +118,7 @@ flowchart TB
     planner["规划 Agent<br/>拆解任务、识别依赖和风险"]
     executor["执行 Agent<br/>实现、修改文档或产出交付物"]
     reviewer["Review Agent<br/>检查质量、证据和风险"]
-    accept["验收<br/>人类确认或明确授权完成"]
+    accept["验收<br/>三轮 Review 后问题收口"]
     archive["Archive<br/>沉淀历史记录"]
 
     human -->|"创建需求或补充上下文"| board
@@ -146,9 +146,10 @@ flowchart TB
 - 执行日志
 - 提交记录
 - Review 结论
+- Review 轮次和问题收口状态
 - 测试、截图、日志或其它验收证据
 
-移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论和验收证据。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
+每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会自动增加 `review_rounds` 并重置 `review_issues_closed: false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据、`review_rounds >= 3`，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
 
 ## Vault 结构
 

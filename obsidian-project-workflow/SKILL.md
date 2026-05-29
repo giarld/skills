@@ -102,5 +102,7 @@ Board columns:
 - If the user says they manually committed code, capture the commit message/revision/hash they provide and record it; do not invent missing values.
 - For code tasks, set `requires_commit: true` in the task note or pass `--require-commit` when moving to `完成`.
 - Before moving a code task to `完成`, check `提交记录`. If the commit chain lacks a commit id/hash or svn revision, stop and ask the user for it, then record it with `scripts/record_commit.py`.
+- Each move into `Review` starts a new review round. `scripts/move_task.py` increments `review_rounds` and resets `review_issues_closed: false` when the card enters `Review` from another column.
+- Do not move a task to `完成` until it has completed at least 3 review rounds and all review issues are closed. `scripts/move_task.py` enforces `review_rounds >= 3` and `review_issues_closed: true`; set `review_issues_closed: true` only after recorded review findings are resolved or intentionally closed.
 - Do not require commit metadata for non-code tasks.
 - Before completing a write operation, verify the board changed in the resolved vault, not the session directory.
