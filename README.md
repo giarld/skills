@@ -12,6 +12,7 @@ Reusable agent skills and helper scripts for common automation workflows.
 | `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
 | `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
 | `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
+| `obsidian-project-workflow` | Operate an Obsidian-backed project workflow with Kanban boards, task notes, and vault-aware helper scripts | `obsidian-project-workflow/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill obsidian-project-workflow` |
 | `openrouter-video-gen` | Generate videos through OpenRouter with model discovery, async polling, and download helpers | `openrouter-video-gen/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill openrouter-video-gen` |
 | `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill remove-background` |
 
@@ -209,6 +210,46 @@ Dependencies:
 python3 -m pip install -U openai
 ```
 
+### `obsidian-project-workflow`
+
+Operate an Obsidian-backed project workflow with `obsidian` CLI and the Obsidian Kanban plugin.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills --skill obsidian-project-workflow
+```
+
+- Entry files:
+  - `obsidian-project-workflow/SKILL.md`
+  - `obsidian-project-workflow/README.md`
+  - `obsidian-project-workflow/scripts/init_project.py`
+  - `obsidian-project-workflow/scripts/create_task.py`
+  - `obsidian-project-workflow/scripts/move_task.py`
+  - `obsidian-project-workflow/scripts/resolve_vault.py`
+  - `obsidian-project-workflow/references/obsidian-cli-quickref.md`
+  - `obsidian-project-workflow/references/workflow-model.md`
+- Features:
+  - query project task boards through the `obsidian` CLI
+  - scaffold project folders, Kanban boards, and task notes
+  - move tasks through `需求池 -> 待执行 -> 执行中 -> Review -> 完成 -> Archive`
+  - preserve Obsidian vault paths and Kanban plugin metadata
+- Requirements:
+  - Obsidian installed and running
+  - Obsidian CLI enabled
+  - Obsidian Kanban plugin enabled
+
+Quick examples:
+
+```bash
+obsidian search query="任务看板" limit=20
+python3 obsidian-project-workflow/scripts/init_project.py --project-name "项目名称" --board-name "研发任务看板.md"
+python3 obsidian-project-workflow/scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "研发任务看板.md"
+python3 obsidian-project-workflow/scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "研发任务看板.md"
+```
+
+On Windows, use `python` and set `PYTHONUTF8=1` when working with non-ASCII project or task names.
+
 ### `openrouter-video-gen`
 
 Generate videos through OpenRouter's asynchronous video API.
@@ -307,6 +348,13 @@ python3 -m pip install rembg Pillow
 |-- nano-banana-2/
 |   |-- SKILL.md
 |   |-- assets/
+|   `-- scripts/
+|-- obsidian-project-workflow/
+|   |-- SKILL.md
+|   |-- README.md
+|   |-- agents/
+|   |-- assets/
+|   |-- references/
 |   `-- scripts/
 |-- openrouter-video-gen/
 |   |-- SKILL.md

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Project Workflow"
+  short_description: "Obsidian 项目看板与多 Agent 工作流"
+  default_prompt: "Use $obsidian-project-workflow to initialize and manage an Obsidian-based project workflow."
