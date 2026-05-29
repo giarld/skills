@@ -43,6 +43,8 @@ On Windows use `python`; set `PYTHONUTF8=1` for non-ASCII names.
 
 For existing boards, keep their current card link style when moving cards. The helper scripts understand full-path wikilinks, short wikilinks, aliased wikilinks, and exact plain-text task cards; if a board uses another Kanban-compatible card shape, read the board first and preserve the surrounding Markdown instead of forcing a format migration.
 
+When moving an existing card, `scripts/move_task.py` resolves the task note from the matched card's wikilink target before falling back to title-based filename inference.
+
 If an existing task note filename differs from the task title, pass `--note-path` to `scripts/record_commit.py` instead of relying on title-to-filename inference.
 
 ## Vault And Paths

@@ -22,11 +22,15 @@ def wikilink_target_matches(target: str, expected_target: str, note_name: str) -
 
 
 def card_links_to_task(line: str, expected_target: str, note_name: str, title: str) -> bool:
+    return matching_wikilink_target(line, expected_target, note_name, title) is not None
+
+
+def matching_wikilink_target(line: str, expected_target: str, note_name: str, title: str) -> str | None:
     for match in WIKILINK_RE.finditer(line):
         alias = (match.group(2) or "").strip()
         if wikilink_target_matches(match.group(1), expected_target, note_name) or alias == title.strip():
-            return True
-    return False
+            return normalize_wikilink_target(match.group(1))
+    return None
 
 
 def normalize_card_text(line: str) -> str:

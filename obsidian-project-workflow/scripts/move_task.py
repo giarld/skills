@@ -8,7 +8,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
-from board_utils import card_matches_task
+from board_utils import card_matches_task, matching_wikilink_target
 from vault_utils import resolve_vault_path
 
 
@@ -92,18 +92,76 @@ def insert_card(board: str, column: str, card_line: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def remove_card(board: str, expected_target: str, note_name: str, title: str) -> tuple[str, str]:
+def remove_card(board: str, expected_target: str, note_name: str, title: str) -> tuple[str, str, str | None]:
     lines = board.splitlines()
     removed = ""
+    removed_target = None
     kept: list[str] = []
     for line in lines:
         if not removed and card_matches_task(line, expected_target, note_name, title):
             removed = line
+            removed_target = matching_wikilink_target(line, expected_target, note_name, title)
             continue
         kept.append(line)
     if not removed:
         raise ValueError(f"task card not found: {expected_target} or {note_name}")
-    return "\n".join(kept).rstrip() + "\n", removed
+    return "\n".join(kept).rstrip() + "\n", removed, removed_target
+
+
+def with_markdown_suffix(path: Path) -> Path:
+    if path.suffix == ".md":
+        return path
+    return Path(f"{path}.md")
+
+
+def unique_paths(paths: list[Path]) -> list[Path]:
+    unique = []
+    seen = set()
+    for path in paths:
+        resolved = path.expanduser().resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return unique
+
+
+def resolve_note_path_from_card(
+    vault_path: Path,
+    project_root: Path,
+    project_name: str,
+    link_target: str | None,
+    fallback_note_name: str,
+) -> Path:
+    fallback = project_root / "任务" / "Tasks" / f"{fallback_note_name}.md"
+    if not link_target:
+        return fallback
+
+    target_path = with_markdown_suffix(Path(link_target))
+    if target_path.is_absolute():
+        return target_path.expanduser().resolve()
+
+    parts = target_path.parts
+    candidates = []
+    if parts and parts[0] == project_name:
+        candidates.append(vault_path / target_path)
+    if parts and parts[0] == "任务":
+        candidates.append(project_root / target_path)
+    if parts and parts[0] == "Tasks":
+        candidates.append(project_root / "任务" / target_path)
+    if len(parts) == 1:
+        candidates.append(project_root / "任务" / "Tasks" / target_path)
+    candidates.extend([
+        vault_path / target_path,
+        project_root / target_path,
+        fallback,
+    ])
+
+    candidates = unique_paths(candidates)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
 
 
 def yaml_string(value: str) -> str:
@@ -219,17 +277,19 @@ def move_task(
 
     project_name = safe_project_name(project_name)
     note_name = safe_note_name(title)
-    project_root = vault_path.expanduser().resolve() / project_name
+    vault_path = vault_path.expanduser().resolve()
+    project_root = vault_path / project_name
     board_path = resolve_board_path(project_root, board_name)
-    note_path = project_root / "任务" / "Tasks" / f"{note_name}.md"
     expected_target = f"{project_name}/任务/Tasks/{note_name}"
+
+    board = board_path.read_text(encoding="utf-8")
+    board, card, card_target = remove_card(board, expected_target, note_name, title)
+    note_path = resolve_note_path_from_card(vault_path, project_root, project_name, card_target, note_name)
 
     should_require_commit = require_commit or frontmatter_bool(note_path, "requires_commit")
     if to_column == "完成" and should_require_commit:
         require_commit_chain_for_done(note_path, title)
 
-    board = board_path.read_text(encoding="utf-8")
-    board, card = remove_card(board, expected_target, note_name, title)
     board = insert_card(board, to_column, card)
     write_utf8(board_path, board)
     update_status(note_path, to_column)
