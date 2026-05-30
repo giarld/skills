@@ -107,7 +107,7 @@ Board columns:
 - If the user says they manually committed code, capture the commit message/revision/hash they provide and record it; do not invent missing values.
 - For code tasks, set `requires_commit: true` in the task note or pass `--require-commit` when moving to `完成`, unless the human explicitly says no commit record is needed.
 - Before moving a code task to `完成`, check `提交记录`. If the commit chain lacks a commit id/hash or svn revision and the human did not explicitly waive the record, stop and ask the user for it, then record it with `scripts/record_commit.py`.
-- Each move into `Review` from another column reopens `review_issues_closed: false`; do not record or update `review_rounds`.
+- Each move into `Review` from another column reopens `review_issues_closed: false`.
 - Review closure is derived from the task note's `## Review` table. Record each row as `时间 / Reviewer / 模型 / 结论 / 处理`; put the reviewer model name in `模型`. `scripts/move_task.py` sets `review_issues_closed: true` only when the latest two valid Review records have passing conclusions, such as `通过`, `pass`, `approved`, `ok`, or `lgtm`; otherwise it keeps or sets `review_issues_closed: false`.
 - Do not move a task to `完成` unless `review_issues_closed: true`. `scripts/move_task.py` checks the Review records and the frontmatter gate before allowing the move.
 - Do not require commit metadata for non-code tasks.

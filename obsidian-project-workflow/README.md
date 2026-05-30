@@ -150,7 +150,7 @@ flowchart TB
 - Review 结论和问题收口状态
 - 测试、截图、日志或其它验收证据
 
-每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会重置 `review_issues_closed: false`，但不再记录或维护 `review_rounds`。Review 结果以任务笔记 `## Review` 表格为准，表格记录 `时间 / Reviewer / 模型 / 结论 / 处理`；当最近两条有效 Review 记录的 `结论` 都是通过状态时，脚本会把 `review_issues_closed` 同步为 `true`，否则保持或重置为 `false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
+每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会重置 `review_issues_closed: false`。Review 结果以任务笔记 `## Review` 表格为准，表格记录 `时间 / Reviewer / 模型 / 结论 / 处理`；当最近两条有效 Review 记录的 `结论` 都是通过状态时，脚本会把 `review_issues_closed` 同步为 `true`，否则保持或重置为 `false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
 
 Review 完成后的提交策略：
 

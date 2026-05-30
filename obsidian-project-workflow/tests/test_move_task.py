@@ -101,13 +101,12 @@ class MoveTaskReviewGateTest(unittest.TestCase):
         )
         return vault, board_path, note_path
 
-    def test_enter_review_reopens_issues_without_recording_rounds(self):
+    def test_enter_review_reopens_issues(self):
         vault, _, note_path = self.make_workspace(doing=CARD, status="执行中", closed="true", review_section=REVIEW_TWO_PASS)
 
         move_task.move_task(vault, "Gix", "任务标题", "Review", "任务看板.md")
 
         note = note_path.read_text(encoding="utf-8")
-        self.assertNotIn("review_rounds:", note)
         self.assertIn("review_issues_closed: false", note)
 
     def test_review_to_review_closes_issues_after_two_consecutive_passing_records(self):
