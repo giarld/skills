@@ -78,6 +78,14 @@ REVIEW_REORDERED_TWO_PASS = """## Review
 | 2026-01-02 | Reviewer A | 通过 | gpt-5 | 无 |
 | 2026-01-03 | Reviewer B | 通过 | gpt-5-codex | 无 |
 """
+REVIEW_PREFIXED_TWO_PASS = REVIEW_EMPTY + (
+    "| 2026-01-02 | Reviewer A | gpt-5 | 第1轮通过：未发现阻塞项 | 无 |\n"
+    "| 2026-01-03 | Reviewer B | gpt-5-codex | 第2轮通过：复核通过 | 无 |\n"
+)
+REVIEW_RETURNED_WITH_PASSING_TEXT = REVIEW_EMPTY + (
+    "| 2026-01-02 | Reviewer A | gpt-5 | 通过 | 无 |\n"
+    "| 2026-01-03 | Reviewer B | gpt-5-codex | 退回：实现改动 review 通过，但测试未落地 | 需修改 |\n"
+)
 
 
 class MoveTaskReviewGateTest(unittest.TestCase):
@@ -188,6 +196,20 @@ class MoveTaskReviewGateTest(unittest.TestCase):
 
         self.assertIn("review_issues_closed: true", note_path.read_text(encoding="utf-8"))
         self.assertIn("## 完成\n\n- [ ] [[task_file|任务标题]]", board_path.read_text(encoding="utf-8"))
+
+    def test_done_accepts_prefixed_passing_review_conclusions(self):
+        vault, board_path, note_path = self.make_workspace(review=CARD, status="Review", closed="false", review_section=REVIEW_PREFIXED_TWO_PASS)
+
+        move_task.move_task(vault, "Gix", "任务标题", "完成", "任务看板.md")
+
+        self.assertIn("review_issues_closed: true", note_path.read_text(encoding="utf-8"))
+        self.assertIn("## 完成\n\n- [ ] [[task_file|任务标题]]", board_path.read_text(encoding="utf-8"))
+
+    def test_done_rejects_returned_review_even_when_text_mentions_pass(self):
+        vault, _, _ = self.make_workspace(review=CARD, status="Review", closed="true", review_section=REVIEW_RETURNED_WITH_PASSING_TEXT)
+
+        with self.assertRaisesRegex(ValueError, "review gate incomplete"):
+            move_task.move_task(vault, "Gix", "任务标题", "完成", "任务看板.md")
 
     def test_done_requires_commit_record_when_required(self):
         vault, _, _ = self.make_workspace(review=CARD, status="Review", closed="false", requires_commit="true", review_section=REVIEW_TWO_PASS)

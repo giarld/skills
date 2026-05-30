@@ -315,6 +315,7 @@ def is_passing_review_conclusion(conclusion: str) -> bool:
         "不通过",
         "未通过",
         "失败",
+        "退回",
         "需修改",
         "需要修改",
         "返工",
@@ -327,7 +328,13 @@ def is_passing_review_conclusion(conclusion: str) -> bool:
     if any(token in normalized for token in negative_tokens):
         return False
     passing_tokens = {"通过", "pass", "passed", "approve", "approved", "ok", "lgtm", "无问题", "验收通过"}
-    return normalized in passing_tokens or normalized.startswith("通过") or normalized.startswith("pass")
+    return (
+        normalized in passing_tokens
+        or "通过" in normalized
+        or normalized.startswith("pass")
+        or normalized.startswith("approve")
+        or normalized.startswith("approved")
+    )
 
 
 def has_required_passing_review_records(content: str) -> bool:
