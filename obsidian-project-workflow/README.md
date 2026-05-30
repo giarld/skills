@@ -92,8 +92,8 @@ flowchart LR
     idea["需求池<br/>想法、需求、Bug"]
     ready["待执行<br/>范围、负责人、验收标准明确"]
     doing["执行中<br/>实现、记录决策和证据"]
-    review["Review<br/>检查变更和验收材料<br/>累计 review_rounds"]
-    done["完成<br/>三轮 Review 且问题收口"]
+    review["Review<br/>检查变更和验收材料<br/>记录模型和结论"]
+    done["完成<br/>连续两轮 Review 通过且问题收口"]
     archive["Archive<br/>历史或关闭事项"]
     rejected["Archive<br/>拒绝、过期或暂不处理"]
 
@@ -103,7 +103,7 @@ flowchart LR
     doing -->|"产出交付物和证据"| review
     review -->|"需要修改"| doing
     review -->|"Review 通过"| gate{"完成门禁"}
-    gate -->|"review_rounds >= 3 + review_issues_closed"| done
+    gate -->|"连续两条通过记录 + review_issues_closed"| done
     gate -->|"代码任务还需提交记录"| commit["提交记录<br/>git hash / svn revision / manual id"]
     commit --> done
     done -->|"不再需要跟踪"| archive
@@ -119,7 +119,7 @@ flowchart TB
     planner["规划 Agent<br/>拆解任务、识别依赖和风险"]
     executor["执行 Agent<br/>实现、修改文档或产出交付物"]
     reviewer["Review Agent<br/>检查质量、证据和风险"]
-    accept["验收<br/>三轮 Review 后问题收口"]
+    accept["验收<br/>连续两轮 Review 通过后问题收口"]
     archive["Archive<br/>沉淀历史记录"]
 
     human -->|"创建需求或补充上下文"| board
@@ -146,11 +146,11 @@ flowchart TB
 - 依赖和风险
 - 执行日志
 - 提交记录
-- Review 结论
-- Review 轮次和问题收口状态
+- Review 模型名称和结论
+- Review 结论和问题收口状态
 - 测试、截图、日志或其它验收证据
 
-每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会自动增加 `review_rounds` 并重置 `review_issues_closed: false`。如果 Review 不通过并退回 `执行中`，脚本会将 `review_rounds` 重置为 `0`，同时重置 `review_issues_closed: false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据、`review_rounds >= 3`，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
+每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会重置 `review_issues_closed: false`，但不再记录或维护 `review_rounds`。Review 结果以任务笔记 `## Review` 表格为准，表格记录 `时间 / Reviewer / 模型 / 结论 / 处理`；当最近两条有效 Review 记录的 `结论` 都是通过状态时，脚本会把 `review_issues_closed` 同步为 `true`，否则保持或重置为 `false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
 
 Review 完成后的提交策略：
 

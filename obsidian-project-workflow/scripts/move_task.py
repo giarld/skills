@@ -18,7 +18,7 @@ VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Arc
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 DEFAULT_BOARD_NAME = "任务看板.md"
-REQUIRED_REVIEW_ROUNDS = 3
+REQUIRED_PASSING_REVIEW_RECORDS = 2
 
 
 def safe_project_name(name: str) -> str:
@@ -255,44 +255,111 @@ def frontmatter_bool(note_path: Path, key: str) -> bool:
     return value.lower() in {"true", "yes", "1", "on"}
 
 
-def frontmatter_int(note_path: Path, key: str) -> int:
-    value = frontmatter_value(note_path, key)
-    return parse_frontmatter_int(value)
-
-
-def frontmatter_int_from_content(content: str, key: str) -> int:
-    return parse_frontmatter_int(frontmatter_value_from_content(content, key))
-
-
-def parse_frontmatter_int(value: str | None) -> int:
+def frontmatter_bool_from_content(content: str, key: str) -> bool:
+    value = frontmatter_value_from_content(content, key)
     if value is None:
-        return 0
+        return False
+    return value.lower() in {"true", "yes", "1", "on"}
+
+
+def review_section_lines(content: str) -> list[str]:
+    lines = content.splitlines()
     try:
-        return int(value)
-    except ValueError:
-        return 0
+        start = next(index for index, line in enumerate(lines) if line.strip() == "## Review") + 1
+    except StopIteration:
+        return []
+
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+    return lines[start:end]
 
 
-def increment_review_round_in_content(content: str) -> str | None:
+def markdown_table_cells(line: str) -> list[str] | None:
+    stripped = line.strip()
+    if not stripped.startswith("|") or not stripped.endswith("|"):
+        return None
+    return [cell.strip() for cell in stripped.strip("|").split("|")]
+
+
+def is_markdown_separator_row(cells: list[str]) -> bool:
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in cells)
+
+
+def review_record_conclusions(content: str) -> list[str]:
+    conclusions = []
+    conclusion_index = 2
+    for line in review_section_lines(content):
+        cells = markdown_table_cells(line)
+        if cells is None:
+            continue
+        if is_markdown_separator_row(cells):
+            continue
+        if "结论" in cells:
+            conclusion_index = cells.index("结论")
+            continue
+        if len(cells) <= conclusion_index:
+            continue
+        conclusion = cells[conclusion_index].strip()
+        if not conclusion:
+            continue
+        conclusions.append(conclusion)
+    return conclusions
+
+
+def is_passing_review_conclusion(conclusion: str) -> bool:
+    normalized = re.sub(r"\s+", "", conclusion).lower().strip("`*_[]（）()。.!！")
+    negative_tokens = (
+        "不通过",
+        "未通过",
+        "失败",
+        "需修改",
+        "需要修改",
+        "返工",
+        "fail",
+        "failed",
+        "reject",
+        "rejected",
+        "blocked",
+    )
+    if any(token in normalized for token in negative_tokens):
+        return False
+    passing_tokens = {"通过", "pass", "passed", "approve", "approved", "ok", "lgtm", "无问题", "验收通过"}
+    return normalized in passing_tokens or normalized.startswith("通过") or normalized.startswith("pass")
+
+
+def has_required_passing_review_records(content: str) -> bool:
+    conclusions = review_record_conclusions(content)
+    if len(conclusions) < REQUIRED_PASSING_REVIEW_RECORDS:
+        return False
+    return all(is_passing_review_conclusion(conclusion) for conclusion in conclusions[-REQUIRED_PASSING_REVIEW_RECORDS:])
+
+
+def set_review_issues_closed_in_content(content: str, closed: bool) -> str | None:
     today = dt.date.today().isoformat()
-    next_round = frontmatter_int_from_content(content, "review_rounds") + 1
-    values = {
-        "review_rounds": str(next_round),
-        "review_issues_closed": "false",
+    return set_frontmatter_values_in_content(content, {
+        "review_issues_closed": str(closed).lower(),
         "updated": yaml_string(today),
-    }
-    return set_frontmatter_values_in_content(content, values)
+    })
 
 
-def require_review_gate_for_done(note_path: Path, title: str) -> None:
-    rounds = frontmatter_int(note_path, "review_rounds")
-    issues_closed = frontmatter_bool(note_path, "review_issues_closed")
-    if rounds >= REQUIRED_REVIEW_ROUNDS and issues_closed:
+def sync_review_issues_closed_from_records_in_content(content: str) -> str | None:
+    return set_review_issues_closed_in_content(content, has_required_passing_review_records(content))
+
+
+def require_review_gate_for_done(content: str, title: str) -> None:
+    issues_closed = frontmatter_bool_from_content(content, "review_issues_closed")
+    passing_records = has_required_passing_review_records(content)
+    if issues_closed and passing_records:
         return
     raise ValueError(
         f"review gate incomplete for task '{title}'; moving to 完成 requires "
-        f"review_rounds >= {REQUIRED_REVIEW_ROUNDS} and review_issues_closed: true "
-        f"(current review_rounds={rounds}, review_issues_closed={str(issues_closed).lower()})."
+        f"{REQUIRED_PASSING_REVIEW_RECORDS} consecutive passing Review records and "
+        f"review_issues_closed: true "
+        f"(current consecutive_passing_reviews={str(passing_records).lower()}, "
+        f"review_issues_closed={str(issues_closed).lower()})."
     )
 
 
@@ -306,12 +373,7 @@ def require_source_column(source_column: str | None, required_column: str, to_co
 
 
 def reopen_review_issues_in_content(content: str) -> str | None:
-    today = dt.date.today().isoformat()
-    return set_frontmatter_values_in_content(content, {
-        "review_rounds": "0",
-        "review_issues_closed": "false",
-        "updated": yaml_string(today),
-    })
+    return set_review_issues_closed_in_content(content, False)
 
 
 def build_note_content_for_move(
@@ -326,7 +388,15 @@ def build_note_content_for_move(
     original = note_path.read_text(encoding="utf-8")
     updated = original
     if to_column == "Review" and source_column != "Review":
-        next_content = increment_review_round_in_content(updated)
+        next_content = reopen_review_issues_in_content(updated)
+        if next_content is not None:
+            updated = next_content
+    if source_column == "Review" and to_column == "Review":
+        next_content = sync_review_issues_closed_from_records_in_content(updated)
+        if next_content is not None:
+            updated = next_content
+    if source_column == "Review" and to_column == "完成":
+        next_content = sync_review_issues_closed_from_records_in_content(updated)
         if next_content is not None:
             updated = next_content
     if source_column == "Review" and to_column not in {"Review", "完成"}:
@@ -440,12 +510,15 @@ def move_task(
     if to_column == "完成" and should_require_commit:
         require_commit_chain_for_done(note_path, title)
 
+    note_content = build_note_content_for_move(note_path, source_column, to_column, skip_commit_record)
     if to_column == "完成":
         require_source_column(source_column, "Review", to_column, title)
-        require_review_gate_for_done(note_path, title)
+        effective_note_content = note_content
+        if effective_note_content is None and note_path.exists():
+            effective_note_content = note_path.read_text(encoding="utf-8")
+        require_review_gate_for_done(effective_note_content or "", title)
 
     board = insert_card(board, to_column, card)
-    note_content = build_note_content_for_move(note_path, source_column, to_column, skip_commit_record)
     write_board_and_note(board_path, board, note_path, note_content)
     return note_path, board_path
 

@@ -6,7 +6,6 @@ owner: ""
 agent_role: ""
 priority: ""
 requires_commit: false
-review_rounds: 0
 review_issues_closed: false
 created: "{{DATE}}"
 updated: "{{DATE}}"
@@ -48,8 +47,8 @@ tags:
 
 ## Review
 
-| 时间 | Reviewer | 结论 | 处理 |
-| --- | --- | --- | --- |
+| 时间 | Reviewer | 模型 | 结论 | 处理 |
+| --- | --- | --- | --- | --- |
 
 ## 验收证据
 
