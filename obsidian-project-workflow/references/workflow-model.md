@@ -32,7 +32,7 @@ Load this reference only for task creation, planning, multi-agent handoff, revie
 1. Capture ideas in `需求池`: concise card, source/problem/value/unknowns in a linked task note when analysis is needed.
 2. Analyze to `待执行`: scope, constraints, dependencies, acceptance criteria, and proposed breakdown are clear.
 3. Execute in `执行中`: owner or agent role assigned; decisions, commands, outputs, changed files, commit metadata, and questions recorded.
-4. Review in `Review`: reviewer, focus, changed artifacts, evidence, and findings recorded. Each entry into `Review` from another column increments `review_rounds` and reopens `review_issues_closed: false`. Return to `执行中` if fixes are required.
+4. Review in `Review`: reviewer, focus, changed artifacts, evidence, and findings recorded. Each entry into `Review` from another column increments `review_rounds` and reopens `review_issues_closed: false`. Return to `执行中` if fixes are required; when this happens, reset `review_rounds` to `0` and keep `review_issues_closed: false`.
 5. Complete/archive: move to `完成` only when acceptance criteria and evidence exist, at least 3 review rounds are complete, and `review_issues_closed: true`; move stale or historical records to `Archive`.
 
 ## Multi-agent handoff pattern

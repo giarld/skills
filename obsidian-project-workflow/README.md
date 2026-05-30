@@ -150,7 +150,7 @@ flowchart TB
 - Review 轮次和问题收口状态
 - 测试、截图、日志或其它验收证据
 
-每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会自动增加 `review_rounds` 并重置 `review_issues_closed: false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据、`review_rounds >= 3`，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
+每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会自动增加 `review_rounds` 并重置 `review_issues_closed: false`。如果 Review 不通过并退回 `执行中`，脚本会将 `review_rounds` 重置为 `0`，同时重置 `review_issues_closed: false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据、`review_rounds >= 3`，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
 
 Review 完成后的提交策略：
 

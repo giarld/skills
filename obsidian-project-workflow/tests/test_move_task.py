@@ -91,6 +91,7 @@ class MoveTaskReviewGateTest(unittest.TestCase):
 
         note = note_path.read_text(encoding="utf-8")
         self.assertIn("status: '执行中'", note)
+        self.assertIn("review_rounds: 0", note)
         self.assertIn("review_issues_closed: false", note)
 
     def test_done_requires_review_source(self):

@@ -308,6 +308,7 @@ def require_source_column(source_column: str | None, required_column: str, to_co
 def reopen_review_issues_in_content(content: str) -> str | None:
     today = dt.date.today().isoformat()
     return set_frontmatter_values_in_content(content, {
+        "review_rounds": "0",
         "review_issues_closed": "false",
         "updated": yaml_string(today),
     })
