@@ -36,6 +36,8 @@ kanban-plugin: board
 
 {done}
 
+***
+
 ## Archive
 
 """

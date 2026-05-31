@@ -8,7 +8,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
-from board_utils import board_has_task_card
+from board_utils import board_has_task_card, is_horizontal_rule
 from vault_utils import resolve_vault_path
 
 
@@ -99,13 +99,21 @@ def insert_card(board: str, column: str, card_line: str) -> str:
             break
 
     section = lines[start:end]
-    while section and not section[-1].strip():
-        section.pop()
-    if section:
-        section.extend(["", card_line, ""])
-    else:
-        section.extend(["", card_line, ""])
-    lines[start:end] = section
+    tail_start = len(section)
+    while tail_start and not section[tail_start - 1].strip():
+        tail_start -= 1
+
+    divider_start = tail_start
+    if divider_start and is_horizontal_rule(section[divider_start - 1]):
+        divider_start -= 1
+
+    content = section[:divider_start]
+    tail = section[divider_start:]
+    while content and not content[-1].strip():
+        content.pop()
+
+    content.extend(["", card_line, ""])
+    lines[start:end] = [*content, *tail]
     return "\n".join(lines).rstrip() + "\n"
 
 

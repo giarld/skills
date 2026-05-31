@@ -6,6 +6,7 @@ import re
 
 
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]*))?\]\]")
+HORIZONTAL_RULE_RE = re.compile(r"^\s{0,3}(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})\s*$")
 
 
 def normalize_wikilink_target(target: str) -> str:
@@ -48,6 +49,10 @@ def card_text_matches_title(line: str, title: str) -> bool:
 
 def is_card_line(line: str) -> bool:
     return line.strip().startswith(("-", "*", "+"))
+
+
+def is_horizontal_rule(line: str) -> bool:
+    return HORIZONTAL_RULE_RE.fullmatch(line) is not None
 
 
 def card_matches_task(line: str, expected_target: str, note_name: str, title: str) -> bool:
