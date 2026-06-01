@@ -15,7 +15,7 @@
 - 读取 Obsidian Kanban 看板并输出简洁项目状态。
 - 初始化项目目录、任务看板和任务笔记。
 - 创建任务卡片，并链接到 vault 内的任务笔记。
-- 在 `需求池 -> 待执行 -> 执行中 -> Review -> 完成 -> Archive` 之间移动任务。
+- 在 `需求池 -> 待执行 -> 执行中 -> Review -> 完成` 之间移动任务，并在需要归档时按需创建 `Archive` 列。
 - 自动维护任务笔记中的状态、执行记录和 Review 信息。
 - 按需记录并校验 git、svn 或用户手动提交的版本信息。
 - 优先通过 `obsidian` CLI 操作当前 vault，避免误把代码仓库或 skill 安装目录当成知识库。
@@ -82,8 +82,10 @@ kanban-plugin: board
 默认看板列为：
 
 ```text
-需求池 -> 待执行 -> 执行中 -> Review -> 完成 -> Archive
+需求池 -> 待执行 -> 执行中 -> Review -> 完成
 ```
+
+`Archive` 是按需终态列。新建看板不会保留空的 `Archive` 列；当用户要求归档任务时，`scripts/move_task.py --to-column Archive` 会先创建 `Archive` 列，再移动任务卡片。如果最后一个归档任务被移出，空 `Archive` 列会被移除。
 
 整体流程：
 

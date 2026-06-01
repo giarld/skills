@@ -10,7 +10,13 @@ import re
 import tempfile
 from pathlib import Path
 
-from board_utils import card_matches_task, is_horizontal_rule, matching_wikilink_target
+from board_utils import (
+    card_matches_task,
+    ensure_archive_column,
+    insert_card,
+    matching_wikilink_target,
+    remove_empty_archive_column,
+)
 from vault_utils import resolve_vault_path
 
 
@@ -71,39 +77,6 @@ def resolve_board_path(project_root: Path, board_name: str | None) -> Path:
         raise FileNotFoundError(f"board not found: {planning_dir / '*任务看板.md'}")
     names = ", ".join(path.name for path in matches)
     raise ValueError(f"multiple board files found, pass --board-name: {names}")
-
-
-def insert_card(board: str, column: str, card_line: str) -> str:
-    lines = board.splitlines()
-    heading = f"## {column}"
-    try:
-        start = lines.index(heading) + 1
-    except ValueError as exc:
-        raise ValueError(f"board column not found: {column}") from exc
-
-    end = len(lines)
-    for index in range(start, len(lines)):
-        if lines[index].startswith("## "):
-            end = index
-            break
-
-    section = lines[start:end]
-    tail_start = len(section)
-    while tail_start and not section[tail_start - 1].strip():
-        tail_start -= 1
-
-    divider_start = tail_start
-    if divider_start and is_horizontal_rule(section[divider_start - 1]):
-        divider_start -= 1
-
-    content = section[:divider_start]
-    tail = section[divider_start:]
-    while content and not content[-1].strip():
-        content.pop()
-
-    content.extend(["", card_line, ""])
-    lines[start:end] = [*content, *tail]
-    return "\n".join(lines).rstrip() + "\n"
 
 
 def remove_card(board: str, expected_target: str, note_name: str, title: str) -> tuple[str, str, str | None, str | None]:
@@ -522,6 +495,8 @@ def move_task(
 
     board = board_path.read_text(encoding="utf-8")
     board, card, card_target, source_column = remove_card(board, expected_target, note_name, title)
+    if to_column != "Archive":
+        board = remove_empty_archive_column(board)
     note_path = resolve_note_path_from_card(vault_path, project_root, project_name, card_target, note_name)
 
     should_require_commit = (require_commit or frontmatter_bool(note_path, "requires_commit")) and not skip_commit_record
@@ -536,6 +511,8 @@ def move_task(
             effective_note_content = note_path.read_text(encoding="utf-8")
         require_review_gate_for_done(effective_note_content or "", title)
 
+    if to_column == "Archive":
+        board = ensure_archive_column(board)
     board = insert_card(board, to_column, card)
     write_board_and_note(board_path, board, note_path, note_content)
     return note_path, board_path

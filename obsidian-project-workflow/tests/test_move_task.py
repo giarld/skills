@@ -36,10 +36,11 @@ kanban-plugin: board
 
 {done}
 
-***
-
-## Archive
-
+%% kanban:settings
+```
+{{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"Gix/任务/Tasks","tag-colors":[]}}
+```
+%%
 """
 
 NOTE = """---
@@ -182,6 +183,45 @@ class MoveTaskReviewGateTest(unittest.TestCase):
         self.assertIn("status: '完成'", note)
         self.assertIn("review_issues_closed: true", note)
         self.assertIn("## 完成\n\n- [ ] [[task_file|任务标题]]", board_path.read_text(encoding="utf-8"))
+        self.assertNotIn("## Archive", board_path.read_text(encoding="utf-8"))
+
+    def test_archive_column_is_created_on_first_archive_move(self):
+        vault, board_path, note_path = self.make_workspace(done=CARD, status="完成", closed="true", review_section=REVIEW_TWO_PASS)
+
+        move_task.move_task(vault, "Gix", "任务标题", "Archive", "任务看板.md")
+
+        board = board_path.read_text(encoding="utf-8")
+        note = note_path.read_text(encoding="utf-8")
+        self.assertIn("***\n\n## Archive\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertLess(board.index("## Archive"), board.index("%% kanban:settings"))
+        self.assertIn('"list-collapse":[false,false,false,false,false,false]', board)
+        self.assertIn("status: 'Archive'", note)
+
+    def test_archive_move_reuses_existing_archive_column(self):
+        board_with_archive = BOARD.replace("%% kanban:settings", "***\n\n## Archive\n\n\n%% kanban:settings")
+        vault, board_path, note_path = self.make_workspace(done=CARD, status="完成", closed="true", review_section=REVIEW_TWO_PASS)
+        board_path.write_text(board_with_archive.format(doing="", review="", done=CARD), encoding="utf-8")
+
+        move_task.move_task(vault, "Gix", "任务标题", "Archive", "任务看板.md")
+
+        board = board_path.read_text(encoding="utf-8")
+        self.assertEqual(board.count("## Archive"), 1)
+        self.assertIn("## Archive\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("status: 'Archive'", note_path.read_text(encoding="utf-8"))
+
+    def test_empty_archive_column_is_removed_after_moving_last_archived_task_out(self):
+        board_with_archived_card = BOARD.replace("%% kanban:settings", f"***\n\n## Archive\n\n{CARD}\n\n%% kanban:settings")
+        vault, board_path, note_path = self.make_workspace(status="Archive", closed="true", review_section=REVIEW_TWO_PASS)
+        board_path.write_text(board_with_archived_card.format(doing="", review="", done=""), encoding="utf-8")
+
+        move_task.move_task(vault, "Gix", "任务标题", "执行中", "任务看板.md")
+
+        board = board_path.read_text(encoding="utf-8")
+        note = note_path.read_text(encoding="utf-8")
+        self.assertNotIn("## Archive", board)
+        self.assertIn('"list-collapse":[false,false,false,false,false]', board)
+        self.assertIn("## 执行中\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("status: '执行中'", note)
 
     def test_done_supports_legacy_review_table_without_model_column(self):
         vault, board_path, note_path = self.make_workspace(review=CARD, status="Review", closed="false", review_section=REVIEW_LEGACY_TWO_PASS)

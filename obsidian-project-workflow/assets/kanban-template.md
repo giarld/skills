@@ -26,15 +26,8 @@ kanban-plugin: board
 
 
 
-***
-
-## Archive
-
-
-
-
 %% kanban:settings
 ```
-{"kanban-plugin":"board","list-collapse":[false,false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"{{PROJECT_NAME}}/任务/Tasks","tag-colors":[]}
+{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"{{PROJECT_NAME}}/任务/Tasks","tag-colors":[]}
 ```
 %%

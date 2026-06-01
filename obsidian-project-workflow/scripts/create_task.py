@@ -8,7 +8,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
-from board_utils import board_has_task_card, is_horizontal_rule
+from board_utils import board_has_task_card, ensure_archive_column, insert_card, remove_empty_archive_column
 from vault_utils import resolve_vault_path
 
 
@@ -81,42 +81,6 @@ def write_utf8(path: Path, content: str) -> None:
         file.write(content)
 
 
-def insert_card(board: str, column: str, card_line: str) -> str:
-    if card_line in board:
-        return board
-
-    lines = board.splitlines()
-    heading = f"## {column}"
-    try:
-        start = lines.index(heading) + 1
-    except ValueError as exc:
-        raise ValueError(f"board column not found: {column}") from exc
-
-    end = len(lines)
-    for index in range(start, len(lines)):
-        if lines[index].startswith("## "):
-            end = index
-            break
-
-    section = lines[start:end]
-    tail_start = len(section)
-    while tail_start and not section[tail_start - 1].strip():
-        tail_start -= 1
-
-    divider_start = tail_start
-    if divider_start and is_horizontal_rule(section[divider_start - 1]):
-        divider_start -= 1
-
-    content = section[:divider_start]
-    tail = section[divider_start:]
-    while content and not content[-1].strip():
-        content.pop()
-
-    content.extend(["", card_line, ""])
-    lines[start:end] = [*content, *tail]
-    return "\n".join(lines).rstrip() + "\n"
-
-
 def create_task(
     vault_path: Path,
     project_name: str,
@@ -163,6 +127,10 @@ def create_task(
     expected_target = f"{project_name}/任务/Tasks/{note_name}"
     board = board_path.read_text(encoding="utf-8")
     if not board_has_task_card(board, expected_target, note_name, title):
+        if column == "Archive":
+            board = ensure_archive_column(board)
+        else:
+            board = remove_empty_archive_column(board)
         write_utf8(board_path, insert_card(board, column, card))
     return note_path, board_path
 

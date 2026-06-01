@@ -76,8 +76,18 @@ Project structure inside the vault:
 Board columns:
 
 ```text
-需求池 -> 待执行 -> 执行中 -> Review -> 完成 -> Archive
+需求池 -> 待执行 -> 执行中 -> Review -> 完成
 ```
+
+`Archive` is an optional terminal column. The default Kanban template must not include it while empty; when a user asks to archive a task, use `scripts/move_task.py --to-column Archive`, which creates:
+
+```markdown
+***
+
+## Archive
+```
+
+and then moves the task card under that column. If the last archived task is later moved out of `Archive`, remove the empty `Archive` column.
 
 `任务看板.md` is only the default board name. Any single-file name matching `*任务看板.md` is valid. If multiple boards exist, pass `--board-name`.
 
@@ -97,6 +107,7 @@ Board columns:
 ## Write Rules
 
 - Preserve Kanban frontmatter and `%% kanban:settings ... %%`.
+- Do not keep an empty `Archive` column; create `Archive` only when moving/creating an archived task, and remove it when it becomes empty.
 - Keep `new-note-folder` pointed at `项目名称/任务/Tasks`.
 - Use wikilinks for vault-local links.
 - Create/link task notes for non-trivial cards.
