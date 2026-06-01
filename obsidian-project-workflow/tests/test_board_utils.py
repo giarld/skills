@@ -63,6 +63,27 @@ class BoardUtilsArchiveColumnTest(unittest.TestCase):
         self.assertIn("- [ ] card\n\n%% kanban:settings", once)
         self.assertNotIn("- [ ] card\n\n\n%% kanban:settings", once)
 
+    def test_insert_card_does_not_add_blank_line_between_cards(self):
+        board = board_utils.insert_card(
+            BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE,
+            "完成",
+            "- [ ] second card",
+        )
+
+        self.assertIn("- [ ] card\n- [ ] second card", board)
+        self.assertNotIn("- [ ] card\n\n- [ ] second card", board)
+
+    def test_insert_card_normalizes_blank_line_before_settings(self):
+        board_with_extra_blank = BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE.replace(
+            "## Archive\n\n%% kanban:settings",
+            "## Archive\n\n\n%% kanban:settings",
+        )
+
+        board = board_utils.insert_card(board_with_extra_blank, "完成", "- [ ] second card")
+
+        self.assertIn("## Archive\n\n%% kanban:settings", board)
+        self.assertNotIn("## Archive\n\n\n%% kanban:settings", board)
+
 
 if __name__ == "__main__":
     unittest.main()

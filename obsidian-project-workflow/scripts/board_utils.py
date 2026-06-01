@@ -187,9 +187,12 @@ def insert_card(board: str, column: str, card_line: str) -> str:
     while content and not content[-1].strip():
         content.pop()
 
-    content.extend(["", card_line, ""])
+    if content and is_card_line(content[-1]):
+        content.extend([card_line, ""])
+    else:
+        content.extend(["", card_line, ""])
     lines[start:end] = [*content, *tail]
-    return "\n".join(lines).rstrip() + "\n"
+    return ensure_blank_line_before_kanban_settings("\n".join(lines).rstrip() + "\n")
 
 
 def card_matches_task(line: str, expected_target: str, note_name: str, title: str) -> bool:

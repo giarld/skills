@@ -198,7 +198,7 @@ class MoveTaskReviewGateTest(unittest.TestCase):
         self.assertIn("status: 'Archive'", note)
 
     def test_archive_move_reuses_existing_archive_column(self):
-        board_with_archive = BOARD.replace("%% kanban:settings", "***\n\n## Archive\n\n\n%% kanban:settings")
+        board_with_archive = BOARD.replace("%% kanban:settings", "***\n\n## Archive\n\n- [ ] existing card\n\n%% kanban:settings")
         vault, board_path, note_path = self.make_workspace(done=CARD, status="完成", closed="true", review_section=REVIEW_TWO_PASS)
         board_path.write_text(board_with_archive.format(doing="", review="", done=CARD), encoding="utf-8")
 
@@ -206,7 +206,8 @@ class MoveTaskReviewGateTest(unittest.TestCase):
 
         board = board_path.read_text(encoding="utf-8")
         self.assertEqual(board.count("## Archive"), 1)
-        self.assertIn("## Archive\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("## Archive\n\n- [ ] existing card\n- [ ] [[task_file|任务标题]]", board)
+        self.assertNotIn("- [ ] existing card\n\n- [ ] [[task_file|任务标题]]", board)
         self.assertIn("status: 'Archive'", note_path.read_text(encoding="utf-8"))
 
     def test_empty_archive_column_is_removed_after_moving_last_archived_task_out(self):
