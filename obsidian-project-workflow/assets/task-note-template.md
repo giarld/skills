@@ -7,6 +7,9 @@ agent_role: ""
 priority: ""
 requires_commit: false
 review_issues_closed: false
+review_requested_by: ""
+review_requested_model: ""
+review_requested_at: ""
 created: "{{DATE}}"
 updated: "{{DATE}}"
 tags:

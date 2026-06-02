@@ -48,6 +48,9 @@ title: 任务标题
 status: {status}
 review_issues_closed: {closed}
 requires_commit: {requires_commit}
+review_requested_by: ''
+review_requested_model: ''
+review_requested_at: ''
 updated: 2026-01-01
 ---
 
@@ -150,6 +153,23 @@ class MoveTaskReviewGateTest(unittest.TestCase):
         note = note_path.read_text(encoding="utf-8")
         self.assertIn("status: 'Review'", note)
         self.assertIn("review_issues_closed: false", note)
+
+    def test_review_to_review_can_fill_missing_review_request_metadata(self):
+        vault, _, note_path = self.make_workspace(review=CARD, status="Review", closed="false", review_section=REVIEW_ONE_PASS)
+
+        move_task.move_task(
+            vault,
+            "Gix",
+            "任务标题",
+            "Review",
+            "任务看板.md",
+            review_requester="Codex Fixer",
+            review_requester_model="gpt-5-codex",
+        )
+
+        note = note_path.read_text(encoding="utf-8")
+        self.assertIn("review_requested_by: 'Codex Fixer'", note)
+        self.assertIn("review_requested_model: 'gpt-5-codex'", note)
 
     def test_done_requires_review_source(self):
         vault, _, _ = self.make_workspace(doing=CARD, status="执行中", closed="true", review_section=REVIEW_TWO_PASS)

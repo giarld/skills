@@ -32,7 +32,7 @@ Load this reference only for task creation, planning, multi-agent handoff, revie
 1. Capture ideas in `需求池`: concise card, source/problem/value/unknowns in a linked task note when analysis is needed.
 2. Analyze to `待执行`: scope, constraints, dependencies, acceptance criteria, and proposed breakdown are clear.
 3. Execute in `执行中`: owner or agent role assigned; decisions, commands, outputs, changed files, commit metadata, and questions recorded.
-4. Review in `Review`: reviewer, reviewer model name, focus, changed artifacts, evidence, and findings recorded in `## Review`. Each entry into `Review` from another column reopens `review_issues_closed: false`. Return to `执行中` if fixes are required; when this happens, keep `review_issues_closed: false` until two consecutive passing Review records are recorded.
+4. Review in `Review`: reviewer, reviewer model name, focus, changed artifacts, evidence, and findings recorded in `## Review`. Each Review attempt must append a new Review row before the turn ends. Each entry into `Review` from another column reopens `review_issues_closed: false`. If fixes are required, first record the failed Review row, then move the card back to `执行中` in the same workflow step; do not leave a failed task in `Review`. After rework, the fixer should only resubmit the task from `执行中` back to `Review` with `scripts/request_review.py`; the fixer must not append a passing Review row on behalf of the reviewer. When this happens, keep `review_issues_closed: false` until two consecutive passing Review records are recorded. Prefer `scripts/record_review.py --decision fail` for the fail path and `scripts/record_review.py --decision pass` for the pass path.
 5. Complete/archive: move to `完成` only when acceptance criteria and evidence exist, the latest two valid Review records have passing conclusions, and `review_issues_closed: true`; move stale or historical records to `Archive`.
 
 ## Multi-agent handoff pattern
@@ -55,6 +55,13 @@ Use this structure in the task note when work changes hands:
 Every handoff should state current state, desired outcome, inputs, constraints, deliverables, acceptance criteria, review expectations, and known risks. Prefer small task notes owned by one actor; use parent/child wikilinks for parallel work.
 
 ## Review gate
+
+When a task is currently in `Review`:
+
+- Every Review attempt must append a row to `## Review`, even if the outcome is "needs fixes" or "missing evidence".
+- A failing Review is not complete until the task is moved back to `执行中`.
+- A passing Review should stay in `Review` until all completion gates are satisfied; record the passing row and sync the gate before asking the human about commit/submission or moving to `完成`.
+- A fixer working in `执行中` may not write a passing Review result. After fixes, the fixer only resubmits the task to `Review` with `scripts/request_review.py`; the reviewer records the next pass/fail outcome there, and the reviewer must differ from that round's recorded requester.
 
 Do not move a card from `Review` to `完成` unless:
 

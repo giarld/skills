@@ -340,6 +340,19 @@ def sync_review_issues_closed_from_records_in_content(content: str) -> str | Non
     return set_review_issues_closed_in_content(content, has_required_passing_review_records(content))
 
 
+def set_review_request_metadata_in_content(
+    content: str,
+    requester: str,
+    requester_model: str,
+) -> str | None:
+    requested_at = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+    return set_frontmatter_values_in_content(content, {
+        "review_requested_by": yaml_string(requester),
+        "review_requested_model": yaml_string(requester_model),
+        "review_requested_at": yaml_string(requested_at),
+    })
+
+
 def require_review_gate_for_done(content: str, title: str) -> None:
     issues_closed = frontmatter_bool_from_content(content, "review_issues_closed")
     passing_records = has_required_passing_review_records(content)
@@ -367,21 +380,24 @@ def reopen_review_issues_in_content(content: str) -> str | None:
     return set_review_issues_closed_in_content(content, False)
 
 
-def build_note_content_for_move(
-    note_path: Path,
+def build_note_content_for_move_from_content(
+    original: str,
     source_column: str | None,
     to_column: str,
     skip_commit_record: bool = False,
+    review_requester: str | None = None,
+    review_requester_model: str | None = None,
 ) -> str | None:
-    if not note_path.exists():
-        return None
-
-    original = note_path.read_text(encoding="utf-8")
     updated = original
-    if to_column == "Review" and source_column != "Review":
-        next_content = reopen_review_issues_in_content(updated)
-        if next_content is not None:
-            updated = next_content
+    if to_column == "Review":
+        if source_column != "Review":
+            next_content = reopen_review_issues_in_content(updated)
+            if next_content is not None:
+                updated = next_content
+        if review_requester is not None and review_requester_model is not None:
+            next_content = set_review_request_metadata_in_content(updated, review_requester, review_requester_model)
+            if next_content is not None:
+                updated = next_content
     if source_column == "Review" and to_column == "Review":
         next_content = sync_review_issues_closed_from_records_in_content(updated)
         if next_content is not None:
@@ -404,6 +420,28 @@ def build_note_content_for_move(
     if updated == original:
         return None
     return updated
+
+
+def build_note_content_for_move(
+    note_path: Path,
+    source_column: str | None,
+    to_column: str,
+    skip_commit_record: bool = False,
+    review_requester: str | None = None,
+    review_requester_model: str | None = None,
+) -> str | None:
+    if not note_path.exists():
+        return None
+
+    original = note_path.read_text(encoding="utf-8")
+    return build_note_content_for_move_from_content(
+        original,
+        source_column,
+        to_column,
+        skip_commit_record,
+        review_requester,
+        review_requester_model,
+    )
 
 
 def write_board_and_note(board_path: Path, board_content: str, note_path: Path, note_content: str | None) -> None:
@@ -480,11 +518,17 @@ def move_task(
     board_name: str | None,
     require_commit: bool = False,
     skip_commit_record: bool = False,
+    review_requester: str | None = None,
+    review_requester_model: str | None = None,
 ) -> tuple[Path, Path]:
     if to_column not in VALID_COLUMNS:
         raise ValueError(f"invalid column: {to_column}")
     if require_commit and skip_commit_record:
         raise ValueError("--require-commit and --skip-commit-record cannot be used together")
+    if (review_requester is None) != (review_requester_model is None):
+        raise ValueError("--review-requester and --review-requester-model must be provided together")
+    if review_requester is not None and to_column != "Review":
+        raise ValueError("--review-requester metadata can only be used when moving to Review")
 
     project_name = safe_project_name(project_name)
     note_name = safe_note_name(title)
@@ -503,7 +547,14 @@ def move_task(
     if to_column == "完成" and should_require_commit:
         require_commit_chain_for_done(note_path, title)
 
-    note_content = build_note_content_for_move(note_path, source_column, to_column, skip_commit_record)
+    note_content = build_note_content_for_move(
+        note_path,
+        source_column,
+        to_column,
+        skip_commit_record,
+        review_requester,
+        review_requester_model,
+    )
     if to_column == "完成":
         require_source_column(source_column, "Review", to_column, title)
         effective_note_content = note_content
@@ -527,6 +578,8 @@ def main() -> int:
     parser.add_argument("--to-column", required=True, choices=sorted(VALID_COLUMNS))
     parser.add_argument("--require-commit", action="store_true", help="Require a recorded commit id/hash or svn revision before moving to 完成.")
     parser.add_argument("--skip-commit-record", action="store_true", help="Skip commit-record gate only when the human explicitly says no commit record is needed.")
+    parser.add_argument("--review-requester", help="Who is resubmitting the task into Review from a non-Review column.")
+    parser.add_argument("--review-requester-model", help="Requester model name for the current Review submission.")
     args = parser.parse_args()
 
     note_path, board_path = move_task(
@@ -537,6 +590,8 @@ def main() -> int:
         args.board_name,
         args.require_commit,
         args.skip_commit_record,
+        args.review_requester,
+        args.review_requester_model,
     )
     print(note_path)
     print(board_path)

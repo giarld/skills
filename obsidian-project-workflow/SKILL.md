@@ -34,7 +34,9 @@ If evidence is absent, say `未看到验收/测试证据`; do not infer it.
 ```bash
 python3 scripts/init_project.py --project-name "项目名称" --board-name "任务看板.md"
 python3 scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "任务看板.md"
-python3 scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "Review" --board-name "任务看板.md"
+python3 scripts/request_review.py --project-name "项目名称" --title "登录流程优化" --requester "Codex Fixer" --requester-model "gpt-5-codex" --board-name "任务看板.md"
+python3 scripts/record_review.py --project-name "项目名称" --title "登录流程优化" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "通过" --disposition "无" --decision pass --board-name "任务看板.md"
+python3 scripts/record_review.py --project-name "项目名称" --title "登录流程优化" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "不通过：缺少回归测试" --disposition "补测试后重提" --decision fail --board-name "任务看板.md"
 python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo"
 python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo" --commit "<hash>"
 python3 scripts/move_task.py --project-name "项目名称" --title "登录流程优化" --to-column "完成" --require-commit
@@ -48,6 +50,9 @@ For existing boards, keep their current card link style when moving cards. The h
 When moving an existing card, `scripts/move_task.py` resolves the task note from the matched card's wikilink target before falling back to title-based filename inference.
 
 If an existing task note filename differs from the task title, pass `--note-path` to `scripts/record_commit.py` instead of relying on title-to-filename inference.
+
+Use `scripts/request_review.py` when a fixer resubmits work into `Review`; it records who requested the new review inside the task note. Use `scripts/record_review.py` for Review outcomes so the Review row and the follow-up column move happen together. `--decision pass` records a passing row and keeps the task in `Review` while syncing the gate; `--decision fail` records the finding and immediately moves the card back to `执行中`.
+Do not use `scripts/record_review.py --decision pass` or `--decision fail` from `执行中`. A fixer in `执行中` may only move the task back to `Review`; only an active reviewer in `Review` may write pass/fail Review outcomes. `scripts/record_review.py` rejects a pass/fail decision if the reviewer matches the current review requester.
 
 ## Vault And Paths
 
@@ -99,6 +104,8 @@ and then moves the task card under that column. If the last archived task is lat
 - `scripts/init_project.py`: scaffold project folders and board.
 - `scripts/create_task.py`: create task note and board card.
 - `scripts/move_task.py`: move card and update note status.
+- `scripts/request_review.py`: resubmit a task into Review and record the current review requester.
+- `scripts/record_review.py`: append a Review row and optionally sync the next workflow move.
 - `scripts/record_commit.py`: append git/svn/manual commit metadata to a task note.
 - `scripts/resolve_vault.py`: print resolved vault root.
 - Read `references/obsidian-cli-quickref.md` only for CLI syntax.
@@ -120,6 +127,10 @@ and then moves the task card under that column. If the last archived task is lat
 - Before moving a code task to `完成`, check `提交记录`. If the commit chain lacks a commit id/hash or svn revision and the human did not explicitly waive the record, stop and ask the user for it, then record it with `scripts/record_commit.py`.
 - Each move into `Review` from another column reopens `review_issues_closed: false`.
 - Review closure is derived from the task note's `## Review` table. Record each row as `时间 / Reviewer / 模型 / 结论 / 处理`; put the reviewer model name in `模型`. `scripts/move_task.py` sets `review_issues_closed: true` only when the latest two valid Review records have passing conclusions, such as `通过`, `pass`, `approved`, `ok`, or `lgtm`; otherwise it keeps or sets `review_issues_closed: false`.
+- Every Review attempt must append a new `## Review` row before the agent ends the turn. Do not summarize Review findings only in chat.
+- If Review finds any issue, missing evidence, or required follow-up, the agent must do both of the following in the same workflow step: record the failed Review row and move the card from `Review` back to `执行中`. Prefer `scripts/record_review.py --decision fail`; do not leave a failed task parked in `Review`.
+- If Review passes, still append a Review row and sync the Review gate before asking to move on. Prefer `scripts/record_review.py --decision pass` so `review_issues_closed` reflects the latest two valid records.
+- The fixer/executor must not append a passing Review row after finishing rework in `执行中`. The correct action is only to resubmit with `scripts/request_review.py`; the next pass/fail row must be written by the reviewer while the task is actually in `Review`, and the reviewer must differ from the recorded review requester.
 - Do not move a task to `完成` unless `review_issues_closed: true`. `scripts/move_task.py` checks the Review records and the frontmatter gate before allowing the move.
 - Do not require commit metadata for non-code tasks.
 - Before completing a write operation, verify the board changed in the resolved vault, not the session directory.
