@@ -15,6 +15,7 @@ from board_utils import (
     ensure_archive_column,
     insert_card,
     matching_wikilink_target,
+    normalize_board_column_spacing,
     remove_empty_archive_column,
 )
 from vault_utils import resolve_vault_path
@@ -97,7 +98,7 @@ def remove_card(board: str, expected_target: str, note_name: str, title: str) ->
         kept.append(line)
     if not removed:
         raise ValueError(f"task card not found: {expected_target} or {note_name}")
-    return "\n".join(kept).rstrip() + "\n", removed, removed_target, removed_column
+    return normalize_board_column_spacing("\n".join(kept).rstrip() + "\n"), removed, removed_target, removed_column
 
 
 def with_markdown_suffix(path: Path) -> Path:

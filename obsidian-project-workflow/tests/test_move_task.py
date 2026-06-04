@@ -335,6 +335,25 @@ class MoveTaskReviewGateTest(unittest.TestCase):
         self.assertEqual(original_board, board_path.read_text(encoding="utf-8"))
         self.assertEqual(original_note, note_path.read_text(encoding="utf-8"))
 
+    def test_repeated_moves_do_not_accumulate_blank_lines(self):
+        vault, board_path, _ = self.make_workspace(
+            doing="\n\n\n\n",
+            review=f"{CARD}\n\n\n\n\n\n",
+            status="Review",
+            closed="false",
+            review_section=REVIEW_ONE_PASS,
+        )
+
+        for _ in range(3):
+            move_task.move_task(vault, "Gix", "任务标题", "执行中", "任务看板.md")
+            move_task.move_task(vault, "Gix", "任务标题", "Review", "任务看板.md")
+
+        board = board_path.read_text(encoding="utf-8")
+        self.assertIn("## 执行中\n\n## Review", board)
+        self.assertIn("## Review\n\n- [ ] [[task_file|任务标题]]\n\n## 完成", board)
+        self.assertNotIn("\n\n\n## Review", board)
+        self.assertNotIn("\n\n\n## 完成", board)
+
 
 if __name__ == "__main__":
     unittest.main()

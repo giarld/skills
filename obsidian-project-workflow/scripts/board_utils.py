@@ -76,6 +76,54 @@ def find_column_bounds(lines: list[str], column: str) -> tuple[int, int]:
     return start, end
 
 
+def trim_blank_lines(lines: list[str]) -> list[str]:
+    start = 0
+    end = len(lines)
+    while start < end and not lines[start].strip():
+        start += 1
+    while end > start and not lines[end - 1].strip():
+        end -= 1
+    return lines[start:end]
+
+
+def normalize_column_section(lines: list[str]) -> list[str]:
+    body = trim_blank_lines(lines)
+    tail: list[str] = []
+    if body and is_horizontal_rule(body[-1]):
+        tail = [body[-1]]
+        body = trim_blank_lines(body[:-1])
+
+    normalized = [""]
+    if body:
+        normalized.extend(body)
+        normalized.append("")
+    if tail:
+        normalized.extend(tail)
+        normalized.append("")
+    return normalized
+
+
+def normalize_board_column_spacing(board: str) -> str:
+    lines = board.splitlines()
+    normalized: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        normalized.append(line)
+        index += 1
+        if not line.startswith("## "):
+            continue
+
+        section_start = index
+        while index < len(lines):
+            if lines[index].startswith("## ") or is_kanban_settings_start(lines[index]):
+                break
+            index += 1
+        normalized.extend(normalize_column_section(lines[section_start:index]))
+
+    return ensure_blank_line_before_kanban_settings("\n".join(normalized).rstrip() + "\n")
+
+
 def sync_list_collapse_count(board: str) -> str:
     lines = board.splitlines()
     column_count = sum(1 for line in lines if line.startswith("## "))
@@ -170,29 +218,24 @@ def insert_card(board: str, column: str, card_line: str) -> str:
     if card_line in board:
         return board
 
+    board = normalize_board_column_spacing(board)
     lines = board.splitlines()
     start, end = find_column_bounds(lines, column)
 
-    section = lines[start:end]
-    tail_start = len(section)
-    while tail_start and not section[tail_start - 1].strip():
-        tail_start -= 1
+    section = trim_blank_lines(lines[start:end])
+    tail: list[str] = []
+    if section and is_horizontal_rule(section[-1]):
+        tail = [section[-1], ""]
+        section = trim_blank_lines(section[:-1])
 
-    divider_start = tail_start
-    if divider_start and is_horizontal_rule(section[divider_start - 1]):
-        divider_start -= 1
-
-    content = section[:divider_start]
-    tail = section[divider_start:]
-    while content and not content[-1].strip():
-        content.pop()
-
-    if content and is_card_line(content[-1]):
-        content.extend([card_line, ""])
+    if section and is_card_line(section[-1]):
+        section.append(card_line)
     else:
-        content.extend(["", card_line, ""])
-    lines[start:end] = [*content, *tail]
-    return ensure_blank_line_before_kanban_settings("\n".join(lines).rstrip() + "\n")
+        if section:
+            section.append("")
+        section.append(card_line)
+    lines[start:end] = ["", *section, "", *tail]
+    return normalize_board_column_spacing("\n".join(lines).rstrip() + "\n")
 
 
 def card_matches_task(line: str, expected_target: str, note_name: str, title: str) -> bool:

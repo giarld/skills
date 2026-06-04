@@ -84,6 +84,17 @@ class BoardUtilsArchiveColumnTest(unittest.TestCase):
         self.assertIn("## Archive\n\n%% kanban:settings", board)
         self.assertNotIn("## Archive\n\n\n%% kanban:settings", board)
 
+    def test_insert_card_collapses_existing_empty_column_blank_lines(self):
+        board_with_extra_blank = BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE.replace(
+            "## 执行中\n\n## Review",
+            "## 执行中\n\n\n\n\n## Review",
+        )
+
+        board = board_utils.insert_card(board_with_extra_blank, "执行中", "- [ ] active card")
+
+        self.assertIn("## 执行中\n\n- [ ] active card\n\n## Review", board)
+        self.assertNotIn("## 执行中\n\n- [ ] active card\n\n\n## Review", board)
+
 
 if __name__ == "__main__":
     unittest.main()
