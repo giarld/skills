@@ -1,0 +1,4 @@
+interface:
+  display_name: "Multica CLI"
+  short_description: "Operate Multica from its local CLI"
+  default_prompt: "Use $multica-cli to inspect my Multica workspace and run the requested CLI workflow. Confirm destructive operations before proceeding."

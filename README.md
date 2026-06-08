@@ -10,7 +10,8 @@ Reusable agent skills and helper scripts for common automation workflows.
 | `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill chrome-devtools` |
 | `hermes-agent-api` | Call a Hermes Agent API server over its OpenAI-compatible HTTP interface for chat, responses, and long-running jobs | `hermes-agent-api/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill hermes-agent-api` |
 | `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
-| `make-pdf` | Generate a compileable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
+| `make-pdf` | Generate a compilable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
+| `multica-cli` | Interact with Multica CLI for workspaces, issues, agents, daemon, runtimes, and automation | `multica-cli/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill multica-cli` |
 | `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
 | `obsidian-project-workflow` | Operate an Obsidian-backed project workflow with Kanban boards, task notes, and vault-aware helper scripts | `obsidian-project-workflow/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill obsidian-project-workflow` |
 | `openrouter-video-gen` | Generate videos through OpenRouter with model discovery, async polling, and download helpers | `openrouter-video-gen/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill openrouter-video-gen` |
@@ -166,7 +167,36 @@ Typical use case:
 
 ```text
 Use this skill when source materials need to be turned into a complete,
-compileable `.tex` file and a polished PDF.
+compilable `.tex` file and a polished PDF.
+```
+
+### `multica-cli`
+
+Interact with Multica through the local `multica` CLI.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills --skill multica-cli
+```
+
+- Entry files:
+  - `multica-cli/SKILL.md`
+  - `multica-cli/references/cli.md`
+- Features:
+  - verify CLI installation, authentication, workspace, daemon, and runtime status
+  - manage issues, projects, comments, agents, skills, squads, and autopilots
+  - inspect agent runs and daemon logs
+  - prefer local `multica <command> --help` to handle CLI version drift
+
+Quick examples:
+
+```bash
+multica version
+multica auth status
+multica workspace list --output json
+multica daemon status --output json
+multica issue list --limit 20 --output json
 ```
 
 ### `nano-banana-2`
@@ -347,6 +377,10 @@ python3 -m pip install rembg Pillow
 |-- make-pdf/
 |   |-- SKILL.md
 |   `-- assets/
+|-- multica-cli/
+|   |-- SKILL.md
+|   |-- agents/
+|   `-- references/
 |-- nano-banana-2/
 |   |-- SKILL.md
 |   |-- assets/
