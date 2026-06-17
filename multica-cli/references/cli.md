@@ -1,6 +1,6 @@
 # Multica CLI Reference
 
-Version note: this reference was written against Multica `v0.3.17` public docs and release metadata on 2026-06-08. Because CLI flags can drift between releases, prefer the installed CLI's `multica <command> --help` output over examples here.
+Version note: this reference was refreshed against local Multica `v0.3.22` help output on 2026-06-16. Because CLI flags can drift between releases, prefer the installed CLI's `multica <command> --help` output over examples here.
 
 Sources:
 
@@ -8,6 +8,19 @@ Sources:
 - Multica CLI docs: https://multica.ai/docs/cli
 - CLI and daemon guide: https://github.com/multica-ai/multica/blob/main/CLI_AND_DAEMON.md
 - CLI install guide: https://github.com/multica-ai/multica/blob/main/CLI_INSTALL.md
+
+## Contents
+
+- [What Multica CLI Does](#what-multica-cli-does)
+- [Install And Update](#install-and-update)
+- [Authentication](#authentication)
+- [Setup, Daemon, And Runtime](#setup-daemon-and-runtime)
+- [Workspaces](#workspaces)
+- [Issues](#issues)
+- [Projects](#projects)
+- [Agents, Skills, Squads, And Autopilots](#agents-skills-squads-and-autopilots)
+- [Labels, Attachments, User, And Miscellaneous](#labels-attachments-user-and-miscellaneous)
+- [Version Drift Notes](#version-drift-notes)
 
 ## What Multica CLI Does
 
@@ -67,11 +80,11 @@ The browser flow opens the web app, creates a local PAT, and stores it in the Mu
 Headless login:
 
 ```bash
-multica login --token=
+multica login --token
 multica auth status
 ```
 
-Use the empty `--token=` form so the CLI prompts for the token interactively. Avoid passing the token directly in command history.
+Use `--token` without a value so the CLI prompts for the token interactively. Avoid passing `--token mul_...` or `--token mcn_...` directly unless the user explicitly accepts command-history exposure.
 
 Logout:
 
@@ -86,8 +99,10 @@ Treat logout as destructive because it removes local authentication.
 Cloud setup:
 
 ```bash
-multica setup
+multica setup cloud
 ```
+
+`multica setup` without a subcommand is currently equivalent to `multica setup cloud`, but prefer the explicit form in automation and docs.
 
 Self-host setup:
 
@@ -116,7 +131,8 @@ Runtime:
 multica runtime list
 multica runtime usage
 multica runtime activity
-multica runtime update <id> ...
+multica runtime update <runtime-id> --target-version <version>
+multica runtime update <runtime-id> --target-version <version> --wait
 ```
 
 Useful daemon environment variables:
@@ -157,6 +173,7 @@ multica workspace get
 multica workspace get <id-or-slug> --output json
 multica workspace switch <id-or-slug>
 multica workspace member list
+multica workspace update <id-or-slug> --help
 ```
 
 Prefer `workspace switch` for day-to-day default changes because it verifies access. `config set workspace_id` writes directly and skips the access check.
@@ -177,6 +194,7 @@ multica issue list
 multica issue list --limit 20 --output json
 multica issue list --status in_progress --priority urgent --assignee "Agent Name"
 multica issue list --metadata pipeline_status=waiting_review
+multica issue search "login error" --output json
 multica issue get <issue-key-or-id> --output json
 ```
 
@@ -184,8 +202,12 @@ Create and update:
 
 ```bash
 multica issue create --title "Fix login bug" --description "..." --priority high --assignee "Agent Name"
+multica issue create --title "Import trace" --description-file ./issue.md --attachment ./trace.txt
+multica issue create --title "Use uploaded artifact" --attachment-id <attachment-uuid>
 multica issue update <issue-key-or-id> --title "New title" --priority urgent
 ```
+
+On Windows, prefer `--description-file` for multi-line or non-ASCII issue descriptions. `--description-stdin` is also available, but file input is less likely to mangle bytes in PowerShell pipelines. Existing attachment UUIDs can be bound at creation time with repeated `--attachment-id`.
 
 Assign and status syntax has changed across docs and versions. Always check local help:
 
@@ -203,8 +225,11 @@ multica issue comment list <issue>
 multica issue comment list <issue> --recent 20
 multica issue comment list <issue> --thread <comment-id> --tail 30
 multica issue comment add <issue> --content "Looks good"
+multica issue comment add <issue> --content-file ./comment.md
 multica issue comment add <issue> --parent <comment-id> --content "Reply text"
 ```
+
+Use `--content-file` for multi-line or non-ASCII comment bodies, especially on Windows. `comment list` supports `--roots-only`, `--summary`, `--recent`, `--thread`, `--tail`, and cursor flags `--before/--before-id` for pagination.
 
 Execution history:
 
@@ -212,7 +237,12 @@ Execution history:
 multica issue runs <issue> --output json
 multica issue run-messages <task-id> --issue <issue> --output json
 multica issue run-messages <task-id> --since 42 --output json
+multica issue cancel-task <task-id> --issue <issue> --output json
+multica issue rerun <issue> --output json
+multica issue pull-requests <issue> --output json
 ```
+
+`cancel-task` accepts the short task ID prefix shown by `issue runs`; add `--issue` when short IDs are ambiguous.
 
 Metadata:
 
@@ -235,6 +265,16 @@ multica issue subscriber add <issue> --user "Name"
 multica issue subscriber remove <issue>
 ```
 
+Labels:
+
+```bash
+multica label list --output json
+multica label create --help
+multica issue label list <issue> --output json
+multica issue label add <issue> --help
+multica issue label remove <issue> --help
+```
+
 ## Projects
 
 ```bash
@@ -244,6 +284,8 @@ multica project create --title "Sprint" --description "..." --lead "Agent Name"
 multica project update <project> --status in_progress
 multica project status <project> in_progress
 multica project delete <project>
+multica project resource list <project> --output json
+multica project resource add <project> --type github_repo --url https://github.com/org/repo
 ```
 
 Project statuses include `planned`, `in_progress`, `paused`, `completed`, and `cancelled`.
@@ -259,9 +301,14 @@ multica agent create --help
 multica agent update <slug> --help
 multica agent archive <slug>
 multica agent restore <slug>
+multica agent avatar <slug-or-id> --file ./avatar.png
 multica agent tasks <slug> --output json
 multica agent skills --help
+multica agent env get <agent> --output json
+multica agent env set <agent> --help
 ```
+
+`agent env get/set` is owner/admin-only and audited. Values equal to `****` preserve an existing entry when replacing the environment map.
 
 Skills:
 
@@ -271,6 +318,7 @@ multica skill get <id-or-slug> --output json
 multica skill create --help
 multica skill update --help
 multica skill import --help
+multica skill search "browser" --output json
 multica skill files --help
 multica skill delete <id-or-slug>
 ```
@@ -304,10 +352,11 @@ Cron schedule triggers are exposed through the CLI:
 ```bash
 multica autopilot trigger-add <id> --cron "0 9 * * 1-5" --timezone "America/New_York"
 multica autopilot trigger-update <trigger-id> --enabled=false
+multica autopilot trigger-rotate-url <trigger-id>
 multica autopilot trigger-delete <trigger-id>
 ```
 
-## Miscellaneous
+## Labels, Attachments, User, And Miscellaneous
 
 ```bash
 multica config show
@@ -317,6 +366,10 @@ multica version
 multica update
 multica repo checkout <url>
 multica attachment download <id>
+multica attachment download <id> --output-dir ./downloads
+multica daemon disk-usage --output json
+multica daemon disk-usage --by-workspace --top 20
+multica user profile --help
 ```
 
 ## Version Drift Notes
