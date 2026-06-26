@@ -1,0 +1,7 @@
+interface:
+  display_name: "Battle Memory"
+  short_description: "Initialize, store, refine memory"
+  default_prompt: "Use $battle-memory to initialize AGENTS.md/CLAUDE.md when requested, or proactively read only needed .memory/project-doc context, distill task dialogue, complete the work, and store searchable memory."
+
+policy:
+  allow_implicit_invocation: true

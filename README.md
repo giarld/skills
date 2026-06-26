@@ -6,6 +6,7 @@ Reusable agent skills and helper scripts for common automation workflows.
 
 | Skill | Purpose | Entry Files | Install |
 | --- | --- | --- | --- |
+| `battle-memory` | Store, distill, refine, and compress project task memory with redaction safeguards | `battle-memory/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill battle-memory` |
 | `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill bilibili-video` |
 | `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill chrome-devtools` |
 | `hermes-agent-api` | Call a Hermes Agent API server over its OpenAI-compatible HTTP interface for chat, responses, and long-running jobs | `hermes-agent-api/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill hermes-agent-api` |
@@ -18,6 +19,37 @@ Reusable agent skills and helper scripts for common automation workflows.
 | `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill remove-background` |
 
 ## Skill Details
+
+### `battle-memory`
+
+Store AI Agent task output and task-relevant dialogue as durable project memory.
+
+- Install:
+
+```bash
+npx skills add https://github.com/giarld/skills --skill battle-memory
+```
+
+- Entry files:
+  - `battle-memory/SKILL.md`
+  - `battle-memory/agents/openai.yaml`
+- Features:
+  - initialize project-level `AGENTS.md` and `CLAUDE.md` guidance with `$battle-memory init`
+  - perform relevance-first `.memory/` and project-doc context intake
+  - distill important task dialogue without storing raw chat logs
+  - create or update searchable task memory after durable project work
+  - refine, compress, consolidate, or supersede existing memory records
+  - redact secrets, credentials, private personal data, and raw confidential values
+- Invocation:
+  - may be enabled implicitly by project instructions such as `AGENTS.md`
+  - can also be invoked explicitly through `$battle-memory`
+
+Typical use case:
+
+```text
+Use $battle-memory to continue a feature from prior project memory, complete the work, and store a redacted continuation note.
+Use $battle-memory init to add Battle Memory auto-loading guidance to AGENTS.md and CLAUDE.md.
+```
 
 ### `bilibili-video`
 
@@ -362,6 +394,9 @@ python3 -m pip install rembg Pillow
 ```text
 .
 |-- README.md
+|-- battle-memory/
+|   |-- SKILL.md
+|   `-- agents/
 |-- bilibili-video/
 |   |-- SKILL.md
 |   `-- scripts/
