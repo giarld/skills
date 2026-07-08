@@ -1,6 +1,6 @@
 # Multica CLI Reference
 
-Version note: this reference was refreshed against local Multica `v0.3.22` help output on 2026-06-16. Because CLI flags can drift between releases, prefer the installed CLI's `multica <command> --help` output over examples here.
+Version note: this reference was refreshed against local Multica `v0.3.40` help output on 2026-07-08. Because CLI flags can drift between releases, prefer the installed CLI's `multica <command> --help` output over examples here.
 
 Sources:
 
@@ -16,8 +16,10 @@ Sources:
 - [Authentication](#authentication)
 - [Setup, Daemon, And Runtime](#setup-daemon-and-runtime)
 - [Workspaces](#workspaces)
+- [Chat](#chat)
 - [Issues](#issues)
 - [Projects](#projects)
+- [Repositories](#repositories)
 - [Agents, Skills, Squads, And Autopilots](#agents-skills-squads-and-autopilots)
 - [Labels, Attachments, User, And Miscellaneous](#labels-attachments-user-and-miscellaneous)
 - [Version Drift Notes](#version-drift-notes)
@@ -133,6 +135,13 @@ multica runtime usage
 multica runtime activity
 multica runtime update <runtime-id> --target-version <version>
 multica runtime update <runtime-id> --target-version <version> --wait
+multica runtime delete <runtime-id>
+multica runtime profile list
+multica runtime profile create --help
+multica runtime profile update --help
+multica runtime profile delete --help
+multica runtime profile set-path --help
+multica runtime profile unset-path --help
 ```
 
 Useful daemon environment variables:
@@ -173,6 +182,7 @@ multica workspace get
 multica workspace get <id-or-slug> --output json
 multica workspace switch <id-or-slug>
 multica workspace member list
+multica workspace member invite <email> --role member
 multica workspace update <id-or-slug> --help
 ```
 
@@ -185,6 +195,18 @@ multica daemon start --profile staging
 multica setup self-host --profile staging --server-url https://api-staging.example.com --app-url https://staging.example.com
 ```
 
+## Chat
+
+Current-conversation chat context:
+
+```bash
+multica chat history --output json
+multica chat thread --output json
+multica chat thread <thread-id> --output json
+```
+
+`chat history` shows recent top-level messages and thread summaries for the current conversation channel only. Use `chat thread` with no ID for the current thread, or with a `thread_id` from `chat history`.
+
 ## Issues
 
 Typical list and get flow:
@@ -196,18 +218,27 @@ multica issue list --status in_progress --priority urgent --assignee "Agent Name
 multica issue list --metadata pipeline_status=waiting_review
 multica issue search "login error" --output json
 multica issue get <issue-key-or-id> --output json
+multica issue children <issue-key-or-id> --output json
 ```
 
 Create and update:
 
 ```bash
-multica issue create --title "Fix login bug" --description "..." --priority high --assignee "Agent Name"
-multica issue create --title "Import trace" --description-file ./issue.md --attachment ./trace.txt
-multica issue create --title "Use uploaded artifact" --attachment-id <attachment-uuid>
+multica issue create --title "Fix login bug" --description "..." --priority high --status backlog --project <project-id>
+multica issue create --title "Import trace" --description-file ./issue.md --attachment ./trace.txt --status backlog --project <project-id>
+multica issue create --title "Use uploaded artifact" --attachment-id <attachment-uuid> --status backlog --project <project-id>
 multica issue update <issue-key-or-id> --title "New title" --priority urgent
 ```
 
 On Windows, prefer `--description-file` for multi-line or non-ASCII issue descriptions. `--description-stdin` is also available, but file input is less likely to mangle bytes in PowerShell pipelines. Existing attachment UUIDs can be bound at creation time with repeated `--attachment-id`.
+
+Creation policy for agent-created tasks:
+
+- Create only the main issue unless the user explicitly asks for child issues.
+- Every new issue belongs in Backlog and must be linked to the requested project with `--status backlog --project <project-id>`.
+- Do not pass `--assignee` or `--assignee-id` unless the user explicitly asks for assignment.
+- If child issues are requested, create the main issue first and write its description as a coordinator contract: it must not do child-issue implementation work directly; it should plan, sequence, monitor, review, and unblock children.
+- Create child issues with `--parent <main-issue-id>` and use `--stage <n>` when children must finish in ordered groups. The main issue description should state how it waits for each child/stage, reviews results, and decides when to continue.
 
 Assign and status syntax has changed across docs and versions. Always check local help:
 
@@ -227,6 +258,9 @@ multica issue comment list <issue> --thread <comment-id> --tail 30
 multica issue comment add <issue> --content "Looks good"
 multica issue comment add <issue> --content-file ./comment.md
 multica issue comment add <issue> --parent <comment-id> --content "Reply text"
+multica issue comment delete <comment-id>
+multica issue comment resolve <comment-id>
+multica issue comment unresolve <comment-id>
 ```
 
 Use `--content-file` for multi-line or non-ASCII comment bodies, especially on Windows. `comment list` supports `--roots-only`, `--summary`, `--recent`, `--thread`, `--tail`, and cursor flags `--before/--before-id` for pagination.
@@ -240,6 +274,7 @@ multica issue run-messages <task-id> --since 42 --output json
 multica issue cancel-task <task-id> --issue <issue> --output json
 multica issue rerun <issue> --output json
 multica issue pull-requests <issue> --output json
+multica issue usage <issue> --output json
 ```
 
 `cancel-task` accepts the short task ID prefix shown by `issue runs`; add `--issue` when short IDs are ambiguous.
@@ -270,6 +305,9 @@ Labels:
 ```bash
 multica label list --output json
 multica label create --help
+multica label get <label-id> --output json
+multica label update <label-id> --help
+multica label delete <label-id>
 multica issue label list <issue> --output json
 multica issue label add <issue> --help
 multica issue label remove <issue> --help
@@ -286,9 +324,24 @@ multica project status <project> in_progress
 multica project delete <project>
 multica project resource list <project> --output json
 multica project resource add <project> --type github_repo --url https://github.com/org/repo
+multica project resource update <project> <resource-id> --help
+multica project resource remove <project> <resource-id>
 ```
 
 Project statuses include `planned`, `in_progress`, `paused`, `completed`, and `cancelled`.
+
+## Repositories
+
+Workspace-level repository registry:
+
+```bash
+multica repo list --output json
+multica repo add https://github.com/org/repo --output json
+multica repo remove https://github.com/org/repo --output json
+multica repo checkout https://github.com/org/repo --ref main
+```
+
+Use project resources when repository context is specific to one project; use `repo add/list/remove` for workspace-level registry entries.
 
 ## Agents, Skills, Squads, And Autopilots
 
@@ -303,7 +356,9 @@ multica agent archive <slug>
 multica agent restore <slug>
 multica agent avatar <slug-or-id> --file ./avatar.png
 multica agent tasks <slug> --output json
-multica agent skills --help
+multica agent skills list <agent-id> --output json
+multica agent skills add <agent-id> --skill-ids <skill-id>
+multica agent skills set <agent-id> --skill-ids <skill-id>
 multica agent env get <agent> --output json
 multica agent env set <agent> --help
 ```
@@ -319,7 +374,9 @@ multica skill create --help
 multica skill update --help
 multica skill import --help
 multica skill search "browser" --output json
-multica skill files --help
+multica skill files list <skill-id> --output json
+multica skill files upsert <skill-id> --path SKILL.md --content-file ./SKILL.md
+multica skill files delete <skill-id> <file-id>
 multica skill delete <id-or-slug>
 ```
 
@@ -332,6 +389,10 @@ multica squad create --name "Frontend" --leader <agent>
 multica squad update <squad-id> --help
 multica squad member list <squad-id>
 multica squad member add <squad-id> --help
+multica squad member remove <squad-id> --member-id <agent-id>
+multica squad member remove <squad-id> --member-id <member-id> --type member
+multica squad member set-role <squad-id> --member-id <agent-id> --role <role>
+multica squad member set-role <squad-id> --member-id <member-id> --member-type member --role <role>
 multica squad activity <issue-id> <action|no_action|failed> --reason "..."
 ```
 
@@ -364,7 +425,6 @@ multica config set server_url https://api.example.com
 multica config set app_url https://app.example.com
 multica version
 multica update
-multica repo checkout <url>
 multica attachment download <id>
 multica attachment download <id> --output-dir ./downloads
 multica daemon disk-usage --output json

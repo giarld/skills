@@ -1,6 +1,6 @@
 ---
 name: multica-cli
-description: Interact with the Multica CLI and local agent daemon. Use when an AI agent, assistant, or automation workflow needs to install or verify Multica, log in, manage profiles/workspaces, issues, labels, projects, agents, skills, squads, autopilots, runtimes, attachments, repositories, user profile, or daemon status/logs/disk usage through the `multica` command.
+description: Interact with the Multica CLI and local agent daemon. Use when an AI agent, assistant, or automation workflow needs to install or verify Multica, log in, manage profiles/workspaces, issues, labels, projects, agents, skills, squads, autopilots, runtimes, attachments, repositories, chat context, user profile, or daemon status/logs/disk usage through the `multica` command.
 ---
 
 # Multica CLI
@@ -27,7 +27,7 @@ Use this skill to operate Multica from the local `multica` CLI. Multica connects
 
 - Never paste or persist PATs, daemon tokens, API keys, or secrets into files, shell history, comments, issue metadata, or logs.
 - For headless token login, prefer `multica login --token` so the CLI prompts interactively instead of putting the token in the command line.
-- Before destructive or broad-impact operations, confirm intent with the user: `auth logout`, `daemon stop`, `daemon restart`, `update`, `delete`, `archive`, `restore`, changing workspace defaults, assigning/rerunning/canceling issue tasks, triggering autopilots, rotating webhook URLs, updating runtime versions, or replacing audited agent environment variables.
+- Before destructive or broad-impact operations, confirm intent with the user: `auth logout`, `daemon stop`, `daemon restart`, `update`, `delete`, `remove`, `archive`, `restore`, changing workspace defaults, inviting workspace members, changing squad membership or roles, assigning/rerunning/canceling issue tasks, triggering autopilots, rotating webhook URLs, updating runtime versions, or replacing audited agent environment variables.
 - Before starting a daemon or setup flow that opens a browser, tell the user that authentication may require browser interaction.
 - When tailing logs, use bounded output first, such as `multica daemon logs -n 100`; use `-f` only when live monitoring is requested.
 - Do not build Multica from source unless the user explicitly asks and confirms.
@@ -80,17 +80,18 @@ multica runtime list --output json
 
 Use this decision guide:
 
-- Workspace or member questions: `workspace list`, `workspace get`, `workspace switch`, `workspace update`, `workspace member list`.
-- Issue triage and assignment: `issue list/search/get/create/update/assign/status`, `issue label ...`, top-level `label ...`.
+- Workspace or member questions: `workspace list`, `workspace get`, `workspace switch`, `workspace update`, `workspace member list/invite`.
+- Issue triage and assignment: `issue list/search/get/create/update/assign/status/children/usage`, `issue label ...`, top-level `label ...`.
 - Agent execution tracking: `issue runs`, `issue run-messages`, `issue rerun`, `issue cancel-task`, `agent tasks`, daemon logs.
-- Pull requests, comments, and collaboration: `issue pull-requests`, `issue comment list/add/delete`, `issue subscriber ...`.
-- Project planning and resources: `project list/get/create/update/delete/status`, `project resource ...`.
-- Agent configuration: `agent list/get/create/update/archive/restore/avatar`, `agent skills ...`, `agent env ...`.
-- Skill management in Multica: `skill list/search/get/create/update/delete/import/files ...`.
-- Squad routing: `squad list/get/create/update/delete`, `squad member ...`, `squad activity ...`.
+- Pull requests, comments, and collaboration: `issue pull-requests`, `issue comment list/add/delete/resolve/unresolve`, `issue subscriber ...`.
+- Chat context from the current conversation channel: `chat history`, `chat thread`.
+- Project planning and resources: `project list/get/create/update/delete/status`, `project resource list/add/remove/update`.
+- Agent configuration: `agent list/get/create/update/archive/restore/avatar`, `agent skills list/add/set`, `agent env get/set`.
+- Skill management in Multica: `skill list/search/get/create/update/delete/import`, `skill files list/upsert/delete`.
+- Squad routing: `squad list/get/create/update/delete`, `squad member list/add/remove/set-role`, `squad activity ...`.
 - Recurring automation: `autopilot list/get/create/update/delete/runs/trigger`, `autopilot trigger-add/update/delete/rotate-url`.
-- Runtime management: `daemon status/logs/start/stop/restart/disk-usage`, `runtime list/usage/activity/update`.
-- Repository and attachments: `repo checkout <url>`, `attachment download <id>`.
+- Runtime management: `daemon status/logs/start/stop/restart/disk-usage`, `runtime list/usage/activity/update/delete`, `runtime profile ...`.
+- Repository and attachments: `repo list/add/remove/checkout`, `attachment download <id>`.
 - User account: `user profile`.
 
 ## Common Commands
@@ -104,20 +105,37 @@ multica workspace member list --output json
 multica agent list --output json
 ```
 
+Read current chat context:
+
+```powershell
+multica chat history --output json
+multica chat thread --output json
+multica chat thread <thread-id> --output json
+```
+
 List and inspect issues:
 
 ```powershell
 multica issue list --limit 20 --output json
 multica issue list --status in_progress --output json
 multica issue get MUL-123 --output json
+multica issue children MUL-123 --output json
 ```
 
-Create or assign an issue after checking `multica issue create --help` and `multica issue assign --help`:
+Create issues with these constraints:
+
+- Create only the main issue by default; do not split child issues unless the user explicitly asks.
+- Put every new issue in Backlog and attach it to the requested project: use `--status backlog --project <project-id>`. If the project is ambiguous or missing, ask for it before creating.
+- Do not set `--assignee` or `--assignee-id` unless the user explicitly asks for an assignee.
+- For a main issue that has or may later have child issues, add description constraints stating that the main issue coordinates child issues, must not directly perform child-issue implementation work, and should only plan, sequence, monitor, review, and unblock child issues.
+- If the user asks to split child issues, create the main issue first, then create child issues with `--parent <main-issue-id>` and `--stage <n>` when ordered barriers are needed. The main issue description must define how it waits for each child/stage, reviews output, and decides the next child/stage.
+
+Create an issue, or assign only when explicitly requested, after checking `multica issue create --help` and `multica issue assign --help`:
 
 ```powershell
-multica issue create --title "Fix login bug" --description "Steps and expected behavior..." --priority high
-multica issue create --title "Import logs" --description-file .\issue.md --attachment .\trace.txt
-multica issue create --title "Follow up" --attachment-id <attachment-uuid>
+multica issue create --title "Fix login bug" --description "Steps and expected behavior..." --priority high --status backlog --project <project-id>
+multica issue create --title "Import logs" --description-file .\issue.md --attachment .\trace.txt --status backlog --project <project-id>
+multica issue create --title "Follow up" --attachment-id <attachment-uuid> --status backlog --project <project-id>
 multica issue assign MUL-123 --to "Agent Name"
 multica issue assign MUL-123 --to-id <assignee-uuid>
 ```
@@ -141,6 +159,7 @@ multica issue run-messages <task-id> --issue MUL-123 --output json
 multica issue run-messages <task-id> --since 42 --output json
 multica issue cancel-task <task-id> --issue MUL-123 --output json
 multica issue rerun MUL-123 --output json
+multica issue usage MUL-123 --output json
 ```
 
 Manage metadata sparingly:

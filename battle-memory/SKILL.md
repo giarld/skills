@@ -1,6 +1,6 @@
 ---
 name: battle-memory
-description: "Store AI Agent task output and task-relevant dialogue as project memory in .memory. Use for human-agent collaboration, cross-context continuation, handoff, and future maintenance after implementing, fixing, refactoring, or completing a feature/requirement. When loaded, read only relevant .memory records and project docs, distill important task dialogue, decide whether to create or update memory before finishing, and refine/compress .memory records when requested. When the user invokes battle-memory with init, initialization, install, initialize project guidance by updating AGENTS.md and CLAUDE.md with Battle Memory auto-loading instructions."
+description: "Store AI Agent task output and task-relevant dialogue as project memory in .memory. Use for human-agent collaboration, cross-context continuation, handoff, and future maintenance after implementing, fixing, refactoring, or completing a feature/requirement. When loaded, read only relevant .memory records and project docs, distill important task dialogue, decide whether to create or update memory before finishing, and refine/compress/organize/archive .memory records when requested. When the user invokes battle-memory with init, initialization, install, initialize project guidance by updating AGENTS.md and CLAUDE.md with Battle Memory auto-loading instructions."
 ---
 
 # Battle Memory
@@ -20,7 +20,7 @@ Do not wait for the user to explicitly ask for memory operations. When this skil
 - After each dialogue turn, distill task-relevant user instructions, agent findings, decisions, corrections, constraints, blockers, validation results, and follow-up commitments into candidate memory.
 - During work, resume memory/docs reading only when a new implementation decision needs context.
 - Before the final response, decide whether the task produced durable memory or important dialogue context. If yes, create or update a `.memory/` record without asking for another instruction.
-- When the user explicitly asks to refine, compress, clean up, consolidate, or summarize memory, run the Memory Refinement workflow instead of merely appending another note.
+- When the user explicitly asks to refine, compress, clean up, consolidate, organize, optimize, archive, or summarize memory, run the Memory Refinement workflow instead of merely appending another note.
 - Mention the memory file in the final response when a record was created or updated.
 
 Skip memory write only when the task is purely conversational, exploratory with no durable conclusion, a tiny mechanical change with no future value, explicitly requested not to persist memory, or impossible to record accurately.
@@ -78,11 +78,11 @@ Do not record small talk, repeated status updates, transient tool output, or int
 
 ## Memory Refinement
 
-When the user asks to refine, compress, clean up, consolidate, summarize, or reduce `.memory/`, actively perform a memory refinement pass. The goal is to reduce context cost while preserving the information needed for future continuation.
+When the user asks to refine, compress, clean up, consolidate, organize, optimize, archive, summarize, or reduce `.memory/`, actively perform a memory refinement pass. The goal is to reduce context cost while preserving the information needed for future continuation.
 
 Use this workflow:
 
-1. Determine the refinement scope from the user request, current task, filenames, headings, and links. If the scope is broad but still inferable, proceed on the narrowest relevant `.memory/` subtree. Ask before rewriting unrelated memory areas.
+1. Determine the refinement scope from the user request, current task, filenames, headings, links, and file modification times. If the scope is broad but still inferable, proceed on the narrowest relevant `.memory/` subtree. Ask before rewriting unrelated memory areas.
 2. Read only the target memory records and directly linked records needed to understand relationships. Do not scan all memory unless the user explicitly asks for whole-repository memory cleanup.
 3. Preserve non-negotiable facts: current requirements, final decisions, source paths, code identifiers, docs references, validation status, skipped checks, blockers, risks, human-confirmation requirements, and open follow-ups.
 4. Compress process history: merge repeated dialogue distillations, remove stale intermediate plans, collapse superseded attempts into one sentence when the final decision is clear, and delete transient tool output.
@@ -91,6 +91,12 @@ Use this workflow:
 7. Keep retrieval strong after compression: preserve stable filenames when possible, keep searchable headings, and retain implementation maps with relative source paths.
 8. Do not delete useful source trace. If a record is fully superseded, mark it as superseded or replace it with a short pointer to the consolidated record instead of leaving future agents with a dead end.
 9. After refinement, report which memory files were updated, consolidated, superseded, or left unchanged.
+
+During refinement, apply these maintenance rules:
+
+- Stale records: when the request covers broad cleanup or an aged area, list candidate memory files with modification times, prioritize the oldest records in scope, and compress them into current state, decisions, implementation map, validation, and open follow-ups. Use the user's age threshold if provided; otherwise prefer relative age within the target scope over inventing a hard cutoff.
+- Plan records: identify records whose main content is a plan, todo list, task chain, next steps, or implementation proposal. Verify whether the plan was completed by checking newer related memory, linked docs, and referenced source/tests. If completed, merge the whole task chain into one concise current-state record and replace old plan records with superseded pointers or archive them when retrieval would be clearer.
+- Orphaned records: treat a memory as orphaned only after checking that its source paths, docs links, related memory links, and task-chain references are missing, broken, or no longer tied to current repository behavior. Move orphaned records to `.memory/archive/` or replace them with a short archive pointer; do not silently delete them.
 
 A refined memory record should usually keep these sections:
 
