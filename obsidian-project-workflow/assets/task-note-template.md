@@ -1,11 +1,16 @@
 ---
 title: "{{TASK_TITLE}}"
 project: "{{PROJECT_NAME}}"
-status: "需求池"
+status: "Backlog"
 owner: ""
 agent_role: ""
 priority: ""
 requires_commit: false
+execution_repo: ""
+run_attempt: 0
+run_status: "idle"
+run_started_at: ""
+last_failure_reason: ""
 review_issues_closed: false
 review_requested_by: ""
 review_requested_model: ""
@@ -18,42 +23,47 @@ tags:
 
 # {{TASK_TITLE}}
 
-## 背景
+## Background
 
 
-## 目标
+## Goal
 
 
-## 范围
+## Scope
 
 
-## 验收标准
-
-- [ ] 
-
-## 拆分任务
+## Acceptance Criteria
 
 - [ ] 
 
-## 依赖与风险
+## Subtasks
+
+- [ ] 
+
+## Dependencies and Risks
 
 
-## 执行记录
+## Execution Log
 
-| 时间 | 执行者 | 动作 | 结果 |
+| Time | Executor | Action | Result |
 | --- | --- | --- | --- |
 
-## 提交记录
+## Execution Attempts
 
-| 时间 | VCS | 提交 | 作者 | 信息 | 来源 |
+| Time | Attempt | Executor | Model | Status | Result / Reason | Next Action |
+| --- | --- | --- | --- | --- | --- | --- |
+
+## Commit Log
+
+| Time | VCS | Commit | Author | Message | Source |
 | --- | --- | --- | --- | --- | --- |
 
 ## Review
 
-| 时间 | Reviewer | 模型 | 结论 | 处理 |
+| Time | Reviewer | Model | Conclusion | Disposition |
 | --- | --- | --- | --- | --- |
 
-## 验收证据
+## Acceptance Evidence
 
 
-## 相关链接
+## Related Links

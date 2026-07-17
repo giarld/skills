@@ -4,15 +4,15 @@ kanban-plugin: board
 
 ---
 
-## 需求池
+## Backlog
 
 
 
-## 待执行
+## Todo
 
 
 
-## 执行中
+## In Progress
 
 
 
@@ -20,7 +20,7 @@ kanban-plugin: board
 
 
 
-## 完成
+## Done
 
 **Complete**
 
@@ -28,6 +28,6 @@ kanban-plugin: board
 
 %% kanban:settings
 ```
-{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"{{PROJECT_NAME}}/任务/Tasks","tag-colors":[]}
+{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"{{PROJECT_NAME}}/Planning/Tasks","tag-colors":[]}
 ```
 %%

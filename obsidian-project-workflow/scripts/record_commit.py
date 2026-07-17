@@ -131,12 +131,12 @@ def manual_commit(args: argparse.Namespace) -> dict[str, str]:
 
 
 def ensure_commit_section(content: str) -> str:
-    if "## 提交记录" in content:
+    if "## Commit Log" in content:
         return content
 
     section = (
-        "\n## 提交记录\n\n"
-        "| 时间 | VCS | 提交 | 作者 | 信息 | 来源 |\n"
+        "\n## Commit Log\n\n"
+        "| Time | VCS | Commit | Author | Message | Source |\n"
         "| --- | --- | --- | --- | --- | --- |\n"
     )
     review_marker = "\n## Review"
@@ -154,7 +154,7 @@ def append_commit(note_path: Path, commit: dict[str, str]) -> None:
     )
     lines = content.splitlines()
     try:
-        heading = lines.index("## 提交记录")
+        heading = lines.index("## Commit Log")
     except ValueError as exc:
         raise RuntimeError("commit section could not be created") from exc
 
@@ -178,7 +178,7 @@ def resolve_note_path(vault_path: Path, project_name: str, title: str, note_path
         return (vault_path / path).resolve()
 
     note_name = safe_note_name(title)
-    return vault_path / project_name / "任务" / "Tasks" / f"{note_name}.md"
+    return vault_path / project_name / "Planning" / "Tasks" / f"{note_name}.md"
 
 
 def main() -> int:

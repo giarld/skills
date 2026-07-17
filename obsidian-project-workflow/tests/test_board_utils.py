@@ -18,15 +18,15 @@ BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE = """---
 kanban-plugin: board
 ---
 
-## 需求池
+## Backlog
 
-## 待执行
+## Todo
 
-## 执行中
+## In Progress
 
 ## Review
 
-## 完成
+## Done
 
 - [ ] card
 
@@ -36,7 +36,7 @@ kanban-plugin: board
 
 %% kanban:settings
 ```
-{"kanban-plugin":"board","list-collapse":[false,false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"Gix/任务/Tasks","tag-colors":[]}
+{"kanban-plugin":"board","list-collapse":[false,false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"Gix/Planning/Tasks","tag-colors":[]}
 ```
 %%
 """
@@ -66,7 +66,7 @@ class BoardUtilsArchiveColumnTest(unittest.TestCase):
     def test_insert_card_does_not_add_blank_line_between_cards(self):
         board = board_utils.insert_card(
             BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE,
-            "完成",
+            "Done",
             "- [ ] second card",
         )
 
@@ -79,21 +79,21 @@ class BoardUtilsArchiveColumnTest(unittest.TestCase):
             "## Archive\n\n\n%% kanban:settings",
         )
 
-        board = board_utils.insert_card(board_with_extra_blank, "完成", "- [ ] second card")
+        board = board_utils.insert_card(board_with_extra_blank, "Done", "- [ ] second card")
 
         self.assertIn("## Archive\n\n%% kanban:settings", board)
         self.assertNotIn("## Archive\n\n\n%% kanban:settings", board)
 
     def test_insert_card_collapses_existing_empty_column_blank_lines(self):
         board_with_extra_blank = BOARD_WITH_DONE_CARD_AND_EMPTY_ARCHIVE.replace(
-            "## 执行中\n\n## Review",
-            "## 执行中\n\n\n\n\n## Review",
+            "## In Progress\n\n## Review",
+            "## In Progress\n\n\n\n\n## Review",
         )
 
-        board = board_utils.insert_card(board_with_extra_blank, "执行中", "- [ ] active card")
+        board = board_utils.insert_card(board_with_extra_blank, "In Progress", "- [ ] active card")
 
-        self.assertIn("## 执行中\n\n- [ ] active card\n\n## Review", board)
-        self.assertNotIn("## 执行中\n\n- [ ] active card\n\n\n## Review", board)
+        self.assertIn("## In Progress\n\n- [ ] active card\n\n## Review", board)
+        self.assertNotIn("## In Progress\n\n- [ ] active card\n\n\n## Review", board)
 
 
 if __name__ == "__main__":

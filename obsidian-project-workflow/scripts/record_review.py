@@ -76,10 +76,10 @@ def ensure_review_section(content: str) -> str:
 
     section = (
         "\n## Review\n\n"
-        "| 时间 | Reviewer | 模型 | 结论 | 处理 |\n"
+        "| Time | Reviewer | Model | Conclusion | Disposition |\n"
         "| --- | --- | --- | --- | --- |\n"
     )
-    evidence_marker = "\n## 验收证据"
+    evidence_marker = "\n## Acceptance Evidence"
     if evidence_marker in content:
         return content.replace(evidence_marker, section + evidence_marker, 1)
     return content.rstrip() + section + "\n"
@@ -120,7 +120,7 @@ def require_review_status_for_decision(note_path: Path, decision: str) -> None:
         return
     raise ValueError(
         "review decisions can only be recorded while the task is in Review; "
-        f"current status is {status or 'unknown'}. After a fixer completes changes in 执行中, "
+        f"current status is {status or 'unknown'}. After a fixer completes changes in In Progress, "
         "move the task back to Review first with scripts/move_task.py --to-column Review. "
         "Only the reviewer should append pass/fail Review records."
     )
@@ -168,7 +168,7 @@ def resolve_note_path(
 
     note_name = safe_note_name(title)
     project_root = vault_path / project_name
-    inferred = project_root / "任务" / "Tasks" / f"{note_name}.md"
+    inferred = project_root / "Planning" / "Tasks" / f"{note_name}.md"
     if inferred.exists():
         return inferred
 
@@ -177,7 +177,7 @@ def resolve_note_path(
     except (FileNotFoundError, ValueError):
         return inferred
 
-    expected_target = f"{project_name}/任务/Tasks/{note_name}"
+    expected_target = f"{project_name}/Planning/Tasks/{note_name}"
     board = board_path.read_text(encoding="utf-8")
     for line in board.splitlines():
         if not move_task.card_matches_task(line, expected_target, note_name, title):
@@ -219,11 +219,11 @@ def record_review(
     note_name = safe_note_name(title)
     project_root = vault_path / project_name
     board_path = move_task.resolve_board_path(project_root, board_name)
-    expected_target = f"{project_name}/任务/Tasks/{note_name}"
+    expected_target = f"{project_name}/Planning/Tasks/{note_name}"
     board = board_path.read_text(encoding="utf-8")
     board, card, _, source_column = move_task.remove_card(board, expected_target, note_name, title)
     board = move_task.remove_empty_archive_column(board)
-    target_column = REVIEW_STATUS if decision == PASSING_DECISION else "执行中"
+    target_column = REVIEW_STATUS if decision == PASSING_DECISION else "In Progress"
     move_task.require_source_column(source_column, REVIEW_STATUS, target_column, title)
     final_note = move_task.build_note_content_for_move_from_content(updated_note, source_column, target_column)
     if final_note is None:
@@ -241,16 +241,16 @@ def main() -> int:
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--title", required=True)
     parser.add_argument("--note-path", help="Task note path, absolute or vault-relative. Overrides --title filename inference.")
-    parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
+    parser.add_argument("--board-name", help="Board file name. Auto-detects '*Task Board.md' when omitted.")
     parser.add_argument("--reviewer", default=DEFAULT_REVIEWER, help="Reviewer name recorded in the Review table.")
     parser.add_argument("--model", required=True, help="Reviewer model name recorded in the Review table.")
-    parser.add_argument("--conclusion", required=True, help="Review conclusion, such as '通过' or '不通过：缺少测试'.")
-    parser.add_argument("--disposition", default="", help="Follow-up action, such as '无' or '补测试后重提'.")
+    parser.add_argument("--conclusion", required=True, help="Review conclusion, such as 'Pass' or 'Fail: tests are missing'.")
+    parser.add_argument("--disposition", default="", help="Follow-up action, such as 'None' or 'Add tests and resubmit'.")
     parser.add_argument("--time", help="Review timestamp. Defaults to the current local time in ISO 8601 format.")
     parser.add_argument(
         "--decision",
         choices=[PASSING_DECISION, FAILING_DECISION],
-        help="Optional workflow action after recording Review: pass keeps the task in Review and syncs the gate; fail moves it back to 执行中.",
+        help="Optional workflow action after recording Review: pass keeps the task in Review and syncs the gate; fail moves it back to In Progress.",
     )
     args = parser.parse_args()
 

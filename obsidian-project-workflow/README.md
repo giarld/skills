@@ -1,215 +1,130 @@
 # obsidian-project-workflow
 
-面向 Obsidian 项目管理的通用 agent skill。它让 AI 代理把任务状态、需求分析、执行记录、Review 结果、提交信息和验收证据写回同一个 Obsidian vault，而不是散落在聊天记录、终端输出和临时文件里。
+A general-purpose agent skill for Obsidian project management. It keeps task status, analysis, execution attempts, Review results, commit metadata, and acceptance evidence in one Obsidian vault instead of scattering them across chats, terminal output, and temporary files.
 
-## 适用场景
+## Features
 
-- 你已经用 Obsidian 管项目、需求、研发笔记或个人任务。
-- 你希望代理能读取项目看板，回答当前进展、阻塞点和待 Review 事项。
-- 你希望从需求池到执行、Review、完成、归档都有清晰状态。
-- 你希望每个非平凡任务都有独立任务笔记，记录背景、范围、验收标准、执行日志、提交记录和证据。
-- 你需要在人和多个代理之间交接任务，并保留可追溯上下文。
+- Read Obsidian Kanban boards and report concise project status.
+- Initialize project folders, a task board, and task notes.
+- Move tasks through `Backlog -> Todo -> In Progress -> Review -> Done`.
+- Create `Archive` only when needed and remove it again when empty.
+- Track task lifecycle separately from execution attempts, failures, and retries.
+- Record Review history, acceptance evidence, and git, svn, or manual commit metadata.
+- Keep an active repository worktree linked to the correct Obsidian task.
 
-## 能力概览
-
-- 读取 Obsidian Kanban 看板并输出简洁项目状态。
-- 初始化项目目录、任务看板和任务笔记。
-- 创建任务卡片，并链接到 vault 内的任务笔记。
-- 在 `需求池 -> 待执行 -> 执行中 -> Review -> 完成` 之间移动任务，并在需要归档时按需创建 `Archive` 列。
-- 自动维护任务笔记中的状态、执行记录和 Review 信息。
-- 按需记录并校验 git、svn 或用户手动提交的版本信息。
-- 优先通过 `obsidian` CLI 操作当前 vault，避免误把代码仓库或 skill 安装目录当成知识库。
-
-## 安装
+## Installation
 
 ```bash
 npx skills add https://github.com/giarld/skills --skill obsidian-project-workflow
 ```
 
-## 快速开始
+## Requirements
 
-查询当前项目看板：
+1. Install and start Obsidian.
+2. Enable the Obsidian command-line interface and verify it with `obsidian help`.
+3. Install and enable the Obsidian Kanban plugin.
+4. Focus the target vault, or explicitly provide the vault when several are open.
 
-```bash
-obsidian search query="任务看板" limit=20
-obsidian read path="项目名称/任务/任务看板.md"
-```
+On Windows, use `python` when appropriate and set `PYTHONUTF8=1` for non-ASCII project or task names.
 
-初始化项目任务区：
+## Quick Start
 
-```bash
-python3 scripts/init_project.py --project-name "项目名称" --board-name "任务看板.md"
-```
-
-创建任务并放入需求池：
+Read the current board:
 
 ```bash
-python3 scripts/create_task.py --project-name "项目名称" --title "登录流程优化" --column "需求池" --board-name "任务看板.md"
+obsidian search query="Task Board" limit=20
+obsidian read path="Project Name/Planning/Task Board.md"
 ```
 
-修复者回提任务到 Review：
+Initialize a project and create a task:
 
 ```bash
-python3 scripts/request_review.py --project-name "项目名称" --title "登录流程优化" --requester "Codex Fixer" --requester-model "gpt-5-codex" --board-name "任务看板.md"
+python3 scripts/init_project.py --project-name "Project Name" --board-name "Task Board.md"
+python3 scripts/create_task.py --project-name "Project Name" --title "Improve Login Flow" --column "Backlog" --board-name "Task Board.md"
 ```
 
-记录一次 Review 并同步后续状态：
+Record execution:
 
 ```bash
-python3 scripts/record_review.py --project-name "项目名称" --title "登录流程优化" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "通过" --disposition "无" --decision pass --board-name "任务看板.md"
-python3 scripts/record_review.py --project-name "项目名称" --title "登录流程优化" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "不通过：缺少回归测试" --disposition "补测试后重提" --decision fail --board-name "任务看板.md"
+python3 scripts/record_execution.py --project-name "Project Name" --title "Improve Login Flow" --event start --executor "Codex Fixer" --model "gpt-5-codex" --repo-path "/path/to/worktree" --board-name "Task Board.md"
+python3 scripts/record_execution.py --project-name "Project Name" --title "Improve Login Flow" --event succeed --executor "Codex Fixer" --model "gpt-5-codex" --result "Implementation complete; tests passed" --board-name "Task Board.md"
+python3 scripts/record_execution.py --project-name "Project Name" --title "Improve Login Flow" --event fail --executor "Codex Fixer" --model "gpt-5-codex" --reason "Test environment unavailable" --next-action "Fix the environment and retry" --board-name "Task Board.md"
 ```
 
-记录一次代码提交：
+When `start` receives `--repo-path`, the script:
+
+- Maintains a bounded bootstrap rule in `AGENTS.md` and `CLAUDE.md` without replacing existing content.
+- Writes `.obsidian-project/current-task.md` as a dynamic pointer to the unique Obsidian task note.
+- Adds that pointer to the worktree's local `.git/info/exclude`.
+- Prints the current task context so the active conversation can read it immediately.
+- Keeps the pointer through failure, retry, and Review, then removes it when the task enters `Done` or `Archive`.
+
+A worktree may have only one active task by default. Use `--replace-current-task` only after a human explicitly switches tasks; use separate worktrees for parallel tasks.
+
+Request and record Review:
 
 ```bash
-python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo"
-python3 scripts/record_commit.py --project-name "项目名称" --title "登录流程优化" --vcs git --repo-path "/path/to/repo" --commit "<hash>"
+python3 scripts/request_review.py --project-name "Project Name" --title "Improve Login Flow" --requester "Codex Fixer" --requester-model "gpt-5-codex" --board-name "Task Board.md"
+python3 scripts/record_review.py --project-name "Project Name" --title "Improve Login Flow" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "Pass" --disposition "None" --decision pass --board-name "Task Board.md"
+python3 scripts/record_review.py --project-name "Project Name" --title "Improve Login Flow" --reviewer "Codex Reviewer" --model "gpt-5-codex" --conclusion "Fail: regression tests are missing" --disposition "Add tests and resubmit" --decision fail --board-name "Task Board.md"
 ```
 
-Windows 环境中建议使用 `python`，处理中文项目名或任务名时设置 `PYTHONUTF8=1`。
+Record a code commit:
 
-## 前提条件
-
-1. 已安装并启动 Obsidian。
-2. 已在 Obsidian 设置中启用命令行界面，可通过 `obsidian help` 验证。
-3. 已安装并启用 Obsidian Kanban 插件。
-4. 当前 Obsidian 窗口聚焦在目标 vault。多 vault 同时打开时，请显式指定 vault 或先切换到目标 vault。
-
-本 skill 维护的看板使用 Kanban 插件格式：
-
-```yaml
----
-kanban-plugin: board
----
+```bash
+python3 scripts/record_commit.py --project-name "Project Name" --title "Improve Login Flow" --vcs git --repo-path "/path/to/repo"
+python3 scripts/record_commit.py --project-name "Project Name" --title "Improve Login Flow" --vcs git --repo-path "/path/to/repo" --commit "<hash>"
 ```
 
-## 工作流模型
-
-默认看板列为：
+## Workflow
 
 ```text
-需求池 -> 待执行 -> 执行中 -> Review -> 完成
+Backlog -> Todo -> In Progress -> Review -> Done -> Archive
 ```
 
-`Archive` 是按需终态列。新建看板不会保留空的 `Archive` 列；当用户要求归档任务时，`scripts/move_task.py --to-column Archive` 会先创建 `Archive` 列，再移动任务卡片。如果最后一个归档任务被移出，空 `Archive` 列会被移除。
+- `Backlog`: ideas, requests, bugs, and opportunities.
+- `Todo`: scoped work with an owner, next action, and acceptance criteria.
+- `In Progress`: active implementation and evidence collection.
+- `Review`: independent review of changes and evidence.
+- `Done`: accepted work that satisfies all completion gates.
+- `Archive`: historical, rejected, expired, or closed work.
 
-整体流程：
+Every entry into `Review` reopens `review_issues_closed: false`. A failing Review must append a Review row and return the task to `In Progress` in the same workflow step. A fixer may resubmit with `request_review.py`, but only a different reviewer may record the next pass or fail result.
 
-```mermaid
-flowchart LR
-    idea["需求池<br/>想法、需求、Bug"]
-    ready["待执行<br/>范围、负责人、验收标准明确"]
-    doing["执行中<br/>实现、记录决策和证据"]
-    review["Review<br/>检查变更和验收材料<br/>记录模型和结论"]
-    done["完成<br/>连续两轮 Review 通过且问题收口"]
-    archive["Archive<br/>历史或关闭事项"]
-    rejected["Archive<br/>拒绝、过期或暂不处理"]
+Moving to `Done` requires two consecutive passing Review records and `review_issues_closed: true`. Code tasks with `requires_commit: true` or `--require-commit` also require a recorded commit id, hash, or svn revision. Use `--skip-commit-record` only after explicit human confirmation.
 
-    idea -->|"分析清楚"| ready
-    idea -->|"不处理"| rejected
-    ready -->|"开始执行"| doing
-    doing -->|"产出交付物和证据"| review
-    review -->|"需要修改"| doing
-    review -->|"Review 通过"| gate{"完成门禁"}
-    gate -->|"连续两条通过记录 + review_issues_closed"| done
-    gate -->|"代码任务还需提交记录"| commit["提交记录<br/>git hash / svn revision / manual id"]
-    commit --> done
-    done -->|"不再需要跟踪"| archive
-```
-
-多 Agent 协作流程：
-
-```mermaid
-flowchart TB
-    human["人类负责人<br/>提出目标、约束和验收标准"]
-    board["Obsidian 看板<br/>状态、任务卡片、优先级"]
-    note["任务笔记<br/>背景、范围、日志、证据、提交记录"]
-    planner["规划 Agent<br/>拆解任务、识别依赖和风险"]
-    executor["执行 Agent<br/>实现、修改文档或产出交付物"]
-    reviewer["Review Agent<br/>检查质量、证据和风险"]
-    accept["验收<br/>连续两轮 Review 通过后问题收口"]
-    archive["Archive<br/>沉淀历史记录"]
-
-    human -->|"创建需求或补充上下文"| board
-    board -->|"非平凡任务创建笔记"| note
-    note -->|"读取背景和约束"| planner
-    planner -->|"写入拆分、依赖、验收标准"| note
-    note -->|"交接执行范围"| executor
-    executor -->|"记录执行日志、变更和证据"| note
-    executor -->|"需要 Review"| board
-    board --> reviewer
-    reviewer -->|"发现问题"| note
-    reviewer -->|"退回执行"| executor
-    reviewer -->|"Review 通过"| accept
-    accept -->|"完成或归档"| board
-    board --> archive
-    note -. "backlinks / wikilinks" .- board
-```
-
-每个任务笔记建议包含：
-
-- 背景和目标
-- 范围和排除项
-- 验收标准
-- 依赖和风险
-- 执行日志
-- 提交记录
-- Review 模型名称和结论
-- Review 结论和问题收口状态
-- 测试、截图、日志或其它验收证据
-
-每次任务从其它列进入 `Review` 时，`scripts/move_task.py` 会重置 `review_issues_closed: false`。Review 结果以任务笔记 `## Review` 表格为准，表格记录 `时间 / Reviewer / 模型 / 结论 / 处理`；当最近两条有效 Review 记录的 `结论` 都是通过状态时，脚本会把 `review_issues_closed` 同步为 `true`，否则保持或重置为 `false`。移动到 `完成` 前，应能在任务笔记中看到明确 Review 结论、验收证据，且 `review_issues_closed: true`。代码任务需要额外设置 `requires_commit: true` 或在移动时使用 `--require-commit`，并记录对应的 git hash、svn revision 或用户提供的提交信息。
-
-Review 失败时的硬约束：
-
-- 每次 Review 都必须新增一条 `## Review` 记录，不能只在对话里说结论。
-- 如果 Review 发现问题、缺证据或需要返工，必须先记失败记录，再把任务从 `Review` 移回 `执行中`，两步缺一不可。
-- 不要把失败任务停留在 `Review` 列等待后续处理，优先使用 `scripts/record_review.py --decision fail` 一次完成“记记录 + 回开发中”。
-- Review 通过时也必须补一条通过记录，并同步 `review_issues_closed`，优先使用 `scripts/record_review.py --decision pass`。
-- 修复者在 `执行中` 完成返工后，不能自己追加“通过”记录。正确操作只有用 `scripts/request_review.py` 回提到 `Review`，然后由 Reviewer 在 `Review` 状态下写下一条通过或不通过记录。
-- `scripts/record_review.py` 会校验当前 Reviewer 不能等于这次回提 Review 的 requester。
-
-Review 完成后的提交策略：
-
-- 任务已通过 Review 且满足完成门禁时，先向人类确认是否提交。人类确认后再执行提交，记录刚创建的提交记录，然后移动到 `完成`。
-- 如果人类拒绝提交，停止处理，不移动到 `完成`。
-- 如果人类已经主动提交，并说明任务可以移动到 `完成`，只有在人类提供 commit id/revision 时才关联该提交并完成任务；不要用仓库最新提交推断任务提交。
-- 如果人类明确说明不需要记录提交记录，可使用 `scripts/move_task.py --skip-commit-record` 直接完成任务，脚本会在 frontmatter 中写入 `commit_record_skipped: true`。
-
-## Vault 结构
-
-初始化后会在 Obsidian vault 中创建：
+## Vault Structure
 
 ```text
-项目名称/
-├── 文档/
-└── 任务/
-    ├── *任务看板.md
+Project Name/
+├── Docs/
+└── Planning/
+    ├── *Task Board.md
     └── Tasks/
 ```
 
-`任务看板.md` 是默认看板名，也可以使用任意匹配 `*任务看板.md` 的单文件看板名。
+`Task Board.md` is the default. A single board matching `*Task Board.md` is also accepted; pass `--board-name` when several boards exist.
 
-## 随附资源
+## Resources
 
-- `SKILL.md`: agent 使用本 skill 时遵循的主指令。
-- `assets/kanban-template.md`: Kanban 看板模板。
-- `assets/task-note-template.md`: 任务笔记模板。
-- `scripts/board_utils.py`: 共享的 Kanban 卡片匹配工具。
-- `scripts/init_project.py`: 初始化项目目录和看板。
-- `scripts/create_task.py`: 创建任务笔记和看板卡片。
-- `scripts/move_task.py`: 移动任务卡片并同步任务状态。
-- `scripts/request_review.py`: 修复者回提任务到 `Review`，并记录本轮送审人。
-- `scripts/record_review.py`: 写入 Review 记录，并按结果同步回 `Review` 或退回 `执行中`。
-- `scripts/record_commit.py`: 写入 git、svn 或手动提交记录。
-- `scripts/resolve_vault.py`: 解析当前 Obsidian vault 路径。
-- `references/obsidian-cli-quickref.md`: Obsidian CLI 速查。
-- `references/workflow-model.md`: 工作流门禁、交接和 Review 规则。
+- `SKILL.md`: core agent instructions.
+- `assets/kanban-template.md`: Kanban board template.
+- `assets/task-note-template.md`: task note template.
+- `scripts/init_project.py`: initialize project folders and a board.
+- `scripts/create_task.py`: create a task note and board card.
+- `scripts/record_execution.py`: record an execution attempt and synchronize state.
+- `scripts/task_context.py`: maintain repository bootstrap rules and the active-task pointer.
+- `scripts/move_task.py`: move a task card and synchronize note status.
+- `scripts/request_review.py`: resubmit a task to Review.
+- `scripts/record_review.py`: append a Review record and synchronize the next state.
+- `scripts/record_commit.py`: append git, svn, or manual commit metadata.
+- `scripts/resolve_vault.py`: resolve the active Obsidian vault.
+- `references/obsidian-cli-quickref.md`: Obsidian CLI syntax.
+- `references/workflow-model.md`: workflow gates and handoff rules.
 
-## 路径原则
+## Path Rules
 
-- Obsidian vault 是项目事实来源。
-- 优先通过 `obsidian` CLI 读写当前已启动的 vault。
-- 不把会话目录、源码目录或 skill 安装目录当作 Obsidian vault。
-- 只有脚本初始化或 CLI 无法完成操作时，才解析 vault 文件系统路径。
+- Treat the Obsidian vault as the project source of truth.
+- Prefer the `obsidian` CLI for the active vault.
+- Never treat the session directory, source repository, or installed skill directory as the vault.
+- Resolve the vault filesystem path only for helper scripts or when the CLI cannot perform the operation.

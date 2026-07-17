@@ -33,7 +33,7 @@ def main() -> int:
     parser.add_argument("--vault-path", help="Path to the Obsidian vault root. Defaults to the active Obsidian vault.")
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
+    parser.add_argument("--board-name", help="Board file name. Auto-detects '*Task Board.md' when omitted.")
     parser.add_argument("--requester", required=True, help="Who is resubmitting the task for review.")
     parser.add_argument("--requester-model", required=True, help="Requester model name for the current review submission.")
     args = parser.parse_args()

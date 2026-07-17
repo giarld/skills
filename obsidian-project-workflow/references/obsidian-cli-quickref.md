@@ -8,12 +8,12 @@ Parameters use `key=value`. Quote values containing spaces.
 
 ```bash
 obsidian eval code="app.vault.adapter.getBasePath ? app.vault.adapter.getBasePath() : app.vault.adapter.basePath"
-obsidian read path="项目名称/任务/任务看板.md"
-obsidian create name="项目名称/任务/任务看板" content="..." silent
-obsidian append path="项目名称/任务/任务看板.md" content="- [ ] [[项目名称/任务/Tasks/任务标题|任务标题]]"
+obsidian read path="Project Name/Planning/Task Board.md"
+obsidian create name="Project Name/Planning/Task Board" content="..." silent
+obsidian append path="Project Name/Planning/Task Board.md" content="- [ ] [[Project Name/Planning/Tasks/Task Title|Task Title]]"
 obsidian search query="status: Review" limit=20
-obsidian backlinks path="项目名称/任务/Tasks/任务标题.md"
-obsidian property:set path="项目名称/任务/Tasks/任务标题.md" name="status" value="执行中"
+obsidian backlinks path="Project Name/Planning/Tasks/Task Title.md"
+obsidian property:set path="Project Name/Planning/Tasks/Task Title.md" name="status" value="In Progress"
 ```
 
 ## Targeting

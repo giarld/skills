@@ -14,10 +14,10 @@ from vault_utils import resolve_vault_path
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 ASSETS = SKILL_ROOT / "assets"
-VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Archive"}
+VALID_COLUMNS = {"Backlog", "Todo", "In Progress", "Review", "Done", "Archive"}
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-DEFAULT_BOARD_NAME = "任务看板.md"
+DEFAULT_BOARD_NAME = "Task Board.md"
 
 
 def safe_project_name(name: str) -> str:
@@ -49,13 +49,13 @@ def safe_board_name(name: str) -> str:
         raise ValueError("board name cannot be . or ..")
     if INVALID_FILENAME_CHARS.search(cleaned):
         raise ValueError("board name must be a single markdown file name and cannot contain path separators")
-    if not cleaned.endswith("任务看板.md"):
-        raise ValueError("board name must match '*任务看板.md'")
+    if not cleaned.endswith("Task Board.md"):
+        raise ValueError("board name must match '*Task Board.md'")
     return cleaned
 
 
 def resolve_board_path(project_root: Path, board_name: str | None) -> Path:
-    planning_dir = project_root / "任务"
+    planning_dir = project_root / "Planning"
     if board_name:
         return planning_dir / safe_board_name(board_name)
 
@@ -63,11 +63,11 @@ def resolve_board_path(project_root: Path, board_name: str | None) -> Path:
     if default_path.exists():
         return default_path
 
-    matches = sorted(planning_dir.glob("*任务看板.md"))
+    matches = sorted(planning_dir.glob("*Task Board.md"))
     if len(matches) == 1:
         return matches[0]
     if not matches:
-        raise FileNotFoundError(f"board not found: {planning_dir / '*任务看板.md'}")
+        raise FileNotFoundError(f"board not found: {planning_dir / '*Task Board.md'}")
     names = ", ".join(path.name for path in matches)
     raise ValueError(f"multiple board files found, pass --board-name: {names}")
 
@@ -99,7 +99,7 @@ def create_task(
     note_name = safe_note_name(title)
     vault_path = vault_path.expanduser().resolve()
     project_root = vault_path / project_name
-    tasks_dir = project_root / "任务" / "Tasks"
+    tasks_dir = project_root / "Planning" / "Tasks"
     board_path = resolve_board_path(project_root, board_name)
     note_path = tasks_dir / f"{note_name}.md"
 
@@ -111,7 +111,7 @@ def create_task(
     content = template
     content = content.replace('title: "{{TASK_TITLE}}"', f"title: {yaml_string(title)}")
     content = content.replace('project: "{{PROJECT_NAME}}"', f"project: {yaml_string(project_name)}")
-    content = content.replace('status: "需求池"', f"status: {yaml_string(column)}")
+    content = content.replace('status: "Backlog"', f"status: {yaml_string(column)}")
     content = content.replace('owner: ""', f"owner: {yaml_string(owner)}")
     content = content.replace('agent_role: ""', f"agent_role: {yaml_string(agent_role)}")
     content = content.replace('priority: ""', f"priority: {yaml_string(priority)}")
@@ -123,8 +123,8 @@ def create_task(
     if overwrite or not note_path.exists():
         write_utf8(note_path, content)
 
-    card = f"- [ ] [[{project_name}/任务/Tasks/{note_name}|{title}]]"
-    expected_target = f"{project_name}/任务/Tasks/{note_name}"
+    card = f"- [ ] [[{project_name}/Planning/Tasks/{note_name}|{title}]]"
+    expected_target = f"{project_name}/Planning/Tasks/{note_name}"
     board = board_path.read_text(encoding="utf-8")
     if not board_has_task_card(board, expected_target, note_name, title):
         if column == "Archive":
@@ -140,8 +140,8 @@ def main() -> int:
     parser.add_argument("--vault-path", help="Path to the Obsidian vault root. Defaults to the active Obsidian vault.")
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
-    parser.add_argument("--column", default="需求池", choices=sorted(VALID_COLUMNS))
+    parser.add_argument("--board-name", help="Board file name. Auto-detects '*Task Board.md' when omitted.")
+    parser.add_argument("--column", default="Backlog", choices=sorted(VALID_COLUMNS))
     parser.add_argument("--owner", default="")
     parser.add_argument("--agent-role", default="")
     parser.add_argument("--priority", default="")

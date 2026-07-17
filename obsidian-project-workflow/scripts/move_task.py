@@ -19,12 +19,13 @@ from board_utils import (
     remove_empty_archive_column,
 )
 from vault_utils import resolve_vault_path
+import task_context
 
 
-VALID_COLUMNS = {"需求池", "待执行", "执行中", "Review", "完成", "Archive"}
+VALID_COLUMNS = {"Backlog", "Todo", "In Progress", "Review", "Done", "Archive"}
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-DEFAULT_BOARD_NAME = "任务看板.md"
+DEFAULT_BOARD_NAME = "Task Board.md"
 REQUIRED_PASSING_REVIEW_RECORDS = 2
 
 
@@ -57,13 +58,13 @@ def safe_board_name(name: str) -> str:
         raise ValueError("board name cannot be . or ..")
     if INVALID_FILENAME_CHARS.search(cleaned):
         raise ValueError("board name must be a single markdown file name and cannot contain path separators")
-    if not cleaned.endswith("任务看板.md"):
-        raise ValueError("board name must match '*任务看板.md'")
+    if not cleaned.endswith("Task Board.md"):
+        raise ValueError("board name must match '*Task Board.md'")
     return cleaned
 
 
 def resolve_board_path(project_root: Path, board_name: str | None) -> Path:
-    planning_dir = project_root / "任务"
+    planning_dir = project_root / "Planning"
     if board_name:
         return planning_dir / safe_board_name(board_name)
 
@@ -71,11 +72,11 @@ def resolve_board_path(project_root: Path, board_name: str | None) -> Path:
     if default_path.exists():
         return default_path
 
-    matches = sorted(planning_dir.glob("*任务看板.md"))
+    matches = sorted(planning_dir.glob("*Task Board.md"))
     if len(matches) == 1:
         return matches[0]
     if not matches:
-        raise FileNotFoundError(f"board not found: {planning_dir / '*任务看板.md'}")
+        raise FileNotFoundError(f"board not found: {planning_dir / '*Task Board.md'}")
     names = ", ".join(path.name for path in matches)
     raise ValueError(f"multiple board files found, pass --board-name: {names}")
 
@@ -126,7 +127,7 @@ def resolve_note_path_from_card(
     link_target: str | None,
     fallback_note_name: str,
 ) -> Path:
-    fallback = project_root / "任务" / "Tasks" / f"{fallback_note_name}.md"
+    fallback = project_root / "Planning" / "Tasks" / f"{fallback_note_name}.md"
     if not link_target:
         return fallback
 
@@ -138,12 +139,12 @@ def resolve_note_path_from_card(
     candidates = []
     if parts and parts[0] == project_name:
         candidates.append(vault_path / target_path)
-    if parts and parts[0] == "任务":
+    if parts and parts[0] == "Planning":
         candidates.append(project_root / target_path)
     if parts and parts[0] == "Tasks":
-        candidates.append(project_root / "任务" / target_path)
+        candidates.append(project_root / "Planning" / target_path)
     if len(parts) == 1:
-        candidates.append(project_root / "任务" / "Tasks" / target_path)
+        candidates.append(project_root / "Planning" / "Tasks" / target_path)
     candidates.extend([
         vault_path / target_path,
         project_root / target_path,
@@ -282,8 +283,8 @@ def review_record_conclusions(content: str) -> list[str]:
             continue
         if is_markdown_separator_row(cells):
             continue
-        if "结论" in cells:
-            conclusion_index = cells.index("结论")
+        if "Conclusion" in cells:
+            conclusion_index = cells.index("Conclusion")
             continue
         if len(cells) <= conclusion_index:
             continue
@@ -296,26 +297,13 @@ def review_record_conclusions(content: str) -> list[str]:
 
 def is_passing_review_conclusion(conclusion: str) -> bool:
     normalized = re.sub(r"\s+", "", conclusion).lower().strip("`*_[]（）()。.!！")
-    negative_tokens = (
-        "不通过",
-        "未通过",
-        "失败",
-        "退回",
-        "需修改",
-        "需要修改",
-        "返工",
-        "fail",
-        "failed",
-        "reject",
-        "rejected",
-        "blocked",
-    )
+    negative_tokens = ("fail", "failed", "reject", "rejected", "returned", "blocked", "changesrequired", "rework")
     if any(token in normalized for token in negative_tokens):
         return False
-    passing_tokens = {"通过", "pass", "passed", "approve", "approved", "ok", "lgtm", "无问题", "验收通过"}
+    passing_tokens = {"pass", "passed", "approve", "approved", "ok", "lgtm", "noissues", "acceptancepassed"}
     return (
         normalized in passing_tokens
-        or "通过" in normalized
+        or bool(re.search(r"\b(?:pass|passed|approve|approved)\b", conclusion.lower()))
         or normalized.startswith("pass")
         or normalized.startswith("approve")
         or normalized.startswith("approved")
@@ -360,7 +348,7 @@ def require_review_gate_for_done(content: str, title: str) -> None:
     if issues_closed and passing_records:
         return
     raise ValueError(
-        f"review gate incomplete for task '{title}'; moving to 完成 requires "
+        f"review gate incomplete for task '{title}'; moving to Done requires "
         f"{REQUIRED_PASSING_REVIEW_RECORDS} consecutive passing Review records and "
         f"review_issues_closed: true "
         f"(current consecutive_passing_reviews={str(passing_records).lower()}, "
@@ -403,18 +391,18 @@ def build_note_content_for_move_from_content(
         next_content = sync_review_issues_closed_from_records_in_content(updated)
         if next_content is not None:
             updated = next_content
-    if source_column == "Review" and to_column == "完成":
+    if source_column == "Review" and to_column == "Done":
         next_content = sync_review_issues_closed_from_records_in_content(updated)
         if next_content is not None:
             updated = next_content
-    if source_column == "Review" and to_column not in {"Review", "完成"}:
+    if source_column == "Review" and to_column not in {"Review", "Done"}:
         next_content = reopen_review_issues_in_content(updated)
         if next_content is not None:
             updated = next_content
     next_content = update_status_in_content(updated, to_column)
     if next_content is not None:
         updated = next_content
-    if to_column == "完成" and skip_commit_record:
+    if to_column == "Done" and skip_commit_record:
         next_content = set_frontmatter_values_in_content(updated, {"commit_record_skipped": "true"})
         if next_content is not None:
             updated = next_content
@@ -479,7 +467,7 @@ def commit_chain_complete(note_path: Path) -> bool:
 
     lines = note_path.read_text(encoding="utf-8").splitlines()
     try:
-        start = lines.index("## 提交记录") + 1
+        start = lines.index("## Commit Log") + 1
     except ValueError:
         return False
 
@@ -497,7 +485,7 @@ def commit_chain_complete(note_path: Path) -> bool:
         if len(cells) < 3:
             continue
         commit_id = cells[2]
-        if commit_id and commit_id not in {"提交", "---"} and not set(commit_id) <= {"-"}:
+        if commit_id and commit_id not in {"Commit", "---"} and not set(commit_id) <= {"-"}:
             return True
     return False
 
@@ -507,7 +495,7 @@ def require_commit_chain_for_done(note_path: Path, title: str) -> None:
         return
     raise ValueError(
         "commit chain incomplete; ask the user for the commit id/hash or svn revision for "
-        f"task '{title}', record it with scripts/record_commit.py, then move the task to 完成."
+        f"task '{title}', record it with scripts/record_commit.py, then move the task to Done."
     )
 
 
@@ -536,7 +524,7 @@ def move_task(
     vault_path = vault_path.expanduser().resolve()
     project_root = vault_path / project_name
     board_path = resolve_board_path(project_root, board_name)
-    expected_target = f"{project_name}/任务/Tasks/{note_name}"
+    expected_target = f"{project_name}/Planning/Tasks/{note_name}"
 
     board = board_path.read_text(encoding="utf-8")
     board, card, card_target, source_column = remove_card(board, expected_target, note_name, title)
@@ -545,7 +533,7 @@ def move_task(
     note_path = resolve_note_path_from_card(vault_path, project_root, project_name, card_target, note_name)
 
     should_require_commit = (require_commit or frontmatter_bool(note_path, "requires_commit")) and not skip_commit_record
-    if to_column == "完成" and should_require_commit:
+    if to_column == "Done" and should_require_commit:
         require_commit_chain_for_done(note_path, title)
 
     note_content = build_note_content_for_move(
@@ -556,7 +544,7 @@ def move_task(
         review_requester,
         review_requester_model,
     )
-    if to_column == "完成":
+    if to_column == "Done":
         require_source_column(source_column, "Review", to_column, title)
         effective_note_content = note_content
         if effective_note_content is None and note_path.exists():
@@ -567,6 +555,10 @@ def move_task(
         board = ensure_archive_column(board)
     board = insert_card(board, to_column, card)
     write_board_and_note(board_path, board, note_path, note_content)
+    if to_column in {"Done", "Archive"} and note_path.exists():
+        repo = frontmatter_value(note_path, "execution_repo")
+        if repo:
+            task_context.clear_task(Path(repo), note_path)
     return note_path, board_path
 
 
@@ -575,9 +567,9 @@ def main() -> int:
     parser.add_argument("--vault-path", help="Path to the Obsidian vault root. Defaults to the active Obsidian vault.")
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--board-name", help="Board file name. Auto-detects '*任务看板.md' when omitted.")
+    parser.add_argument("--board-name", help="Board file name. Auto-detects '*Task Board.md' when omitted.")
     parser.add_argument("--to-column", required=True, choices=sorted(VALID_COLUMNS))
-    parser.add_argument("--require-commit", action="store_true", help="Require a recorded commit id/hash or svn revision before moving to 完成.")
+    parser.add_argument("--require-commit", action="store_true", help="Require a recorded commit id/hash or svn revision before moving to Done.")
     parser.add_argument("--skip-commit-record", action="store_true", help="Skip commit-record gate only when the human explicitly says no commit record is needed.")
     parser.add_argument("--review-requester", help="Who is resubmitting the task into Review from a non-Review column.")
     parser.add_argument("--review-requester-model", help="Requester model name for the current Review submission.")

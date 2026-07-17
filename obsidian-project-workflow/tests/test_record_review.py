@@ -24,11 +24,11 @@ BOARD = """---
 kanban-plugin: board
 ---
 
-## 需求池
+## Backlog
 
-## 待执行
+## Todo
 
-## 执行中
+## In Progress
 
 {doing}
 
@@ -36,19 +36,19 @@ kanban-plugin: board
 
 {review}
 
-## 完成
+## Done
 
 {done}
 
 %% kanban:settings
 ```
-{{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"Gix/任务/Tasks","tag-colors":[]}}
+{{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":false,"new-note-folder":"Gix/Planning/Tasks","tag-colors":[]}}
 ```
 %%
 """
 
 NOTE = """---
-title: 任务标题
+title: Task Title
 status: {status}
 review_issues_closed: {closed}
 review_requested_by: {requester}
@@ -59,16 +59,16 @@ updated: {updated}
 
 {review_section}
 
-## 验收证据
+## Acceptance Evidence
 """
 
-CARD = "- [ ] [[task_file|任务标题]]"
+CARD = "- [ ] [[task_file|Task Title]]"
 REVIEW_EMPTY = """## Review
 
-| 时间 | Reviewer | 模型 | 结论 | 处理 |
+| Time | Reviewer | Model | Conclusion | Disposition |
 | --- | --- | --- | --- | --- |
 """
-REVIEW_ONE_PASS = REVIEW_EMPTY + "| 2026-01-02 | Reviewer A | gpt-5 | 通过 | 无 |\n"
+REVIEW_ONE_PASS = REVIEW_EMPTY + "| 2026-01-02 | Reviewer A | gpt-5 | Pass | None |\n"
 
 
 class RecordReviewWorkflowTest(unittest.TestCase):
@@ -89,8 +89,8 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         vault = Path(tmp.name)
         project = vault / "Gix"
-        board_path = project / "任务" / "任务看板.md"
-        note_path = project / "任务" / "Tasks" / "task_file.md"
+        board_path = project / "Planning" / "Task Board.md"
+        note_path = project / "Planning" / "Tasks" / "task_file.md"
         note_path.parent.mkdir(parents=True)
         board_path.write_text(BOARD.format(doing=doing, review=review, done=done), encoding="utf-8")
         note_path.write_text(
@@ -112,16 +112,16 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.record_review(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Codex Reviewer",
             "gpt-5-codex",
-            "通过",
-            "无",
-            note_path="Gix/任务/Tasks/task_file.md",
+            "Pass",
+            "None",
+            note_path="Gix/Planning/Tasks/task_file.md",
         )
 
         note = note_path.read_text(encoding="utf-8")
-        self.assertIn("| Codex Reviewer | gpt-5-codex | 通过 | 无 |", note)
+        self.assertIn("| Codex Reviewer | gpt-5-codex | Pass | None |", note)
         self.assertIn("status: Review", note)
 
     def test_failing_review_records_row_and_moves_back_to_doing(self):
@@ -130,21 +130,21 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.record_review(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Codex Reviewer",
             "gpt-5-codex",
-            "不通过：缺少回归测试",
-            "补测试后重提",
+            "Fail: regression tests are missing",
+            "Add tests and resubmit",
             decision="fail",
-            board_name="任务看板.md",
+            board_name="Task Board.md",
         )
 
         note = note_path.read_text(encoding="utf-8")
         board = board_path.read_text(encoding="utf-8")
-        self.assertIn("| Codex Reviewer | gpt-5-codex | 不通过：缺少回归测试 | 补测试后重提 |", note)
-        self.assertIn("status: '执行中'", note)
+        self.assertIn("| Codex Reviewer | gpt-5-codex | Fail: regression tests are missing | Add tests and resubmit |", note)
+        self.assertIn("status: 'In Progress'", note)
         self.assertIn("review_issues_closed: false", note)
-        self.assertIn("## 执行中\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("## In Progress\n\n- [ ] [[task_file|Task Title]]", board)
 
     def test_passing_review_records_row_and_syncs_review_gate(self):
         vault, board_path, note_path = self.make_workspace(review=CARD, review_section=REVIEW_ONE_PASS)
@@ -152,21 +152,21 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.record_review(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Codex Reviewer",
             "gpt-5-codex",
-            "通过",
-            "无",
+            "Pass",
+            "None",
             decision="pass",
-            board_name="任务看板.md",
+            board_name="Task Board.md",
         )
 
         note = note_path.read_text(encoding="utf-8")
         board = board_path.read_text(encoding="utf-8")
-        self.assertIn("| Codex Reviewer | gpt-5-codex | 通过 | 无 |", note)
+        self.assertIn("| Codex Reviewer | gpt-5-codex | Pass | None |", note)
         self.assertIn("status: 'Review'", note)
         self.assertIn("review_issues_closed: true", note)
-        self.assertIn("## Review\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("## Review\n\n- [ ] [[task_file|Task Title]]", board)
 
     def test_first_passing_review_row_persists_when_frontmatter_sync_is_noop(self):
         today = dt.date.today().isoformat()
@@ -181,37 +181,37 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.record_review(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Codex Reviewer",
             "gpt-5-codex",
-            "通过",
-            "无",
+            "Pass",
+            "None",
             decision="pass",
-            board_name="任务看板.md",
+            board_name="Task Board.md",
         )
 
         note = note_path.read_text(encoding="utf-8")
         board = board_path.read_text(encoding="utf-8")
-        self.assertIn("| Codex Reviewer | gpt-5-codex | 通过 | 无 |", note)
+        self.assertIn("| Codex Reviewer | gpt-5-codex | Pass | None |", note)
         self.assertIn("review_issues_closed: false", note)
         self.assertIn(f"updated: '{today}'", note)
-        self.assertIn("## Review\n\n- [ ] [[task_file|任务标题]]", board)
+        self.assertIn("## Review\n\n- [ ] [[task_file|Task Title]]", board)
 
     def test_executor_cannot_record_passing_review_from_doing(self):
-        vault, _, note_path = self.make_workspace(doing=CARD, review="", status="执行中", review_section=REVIEW_ONE_PASS)
+        vault, _, note_path = self.make_workspace(doing=CARD, review="", status="In Progress", review_section=REVIEW_ONE_PASS)
         original_note = note_path.read_text(encoding="utf-8")
 
         with self.assertRaisesRegex(ValueError, "can only be recorded while the task is in Review"):
             record_review.record_review(
                 vault,
                 "Gix",
-                "任务标题",
+                "Task Title",
                 "Codex Reviewer",
                 "gpt-5-codex",
-                "通过",
-                "无",
+                "Pass",
+                "None",
                 decision="pass",
-                board_name="任务看板.md",
+                board_name="Task Board.md",
             )
 
         self.assertEqual(original_note, note_path.read_text(encoding="utf-8"))
@@ -220,7 +220,7 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         vault, _, note_path = self.make_workspace(
             doing=CARD,
             review="",
-            status="执行中",
+            status="In Progress",
             requester="''",
             requester_model="''",
             review_section=REVIEW_ONE_PASS,
@@ -229,9 +229,9 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.move_task.move_task(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Review",
-            "任务看板.md",
+            "Task Board.md",
             review_requester="Codex Fixer",
             review_requester_model="gpt-5-codex",
         )
@@ -240,13 +240,13 @@ class RecordReviewWorkflowTest(unittest.TestCase):
             record_review.record_review(
                 vault,
                 "Gix",
-                "任务标题",
+                "Task Title",
                 "Codex Fixer",
                 "gpt-5-codex",
-                "通过",
-                "无",
+                "Pass",
+                "None",
                 decision="pass",
-                board_name="任务看板.md",
+                board_name="Task Board.md",
             )
 
         self.assertIn("status: 'Review'", note_path.read_text(encoding="utf-8"))
@@ -263,8 +263,8 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         request_review.request_review(
             vault,
             "Gix",
-            "任务标题",
-            "任务看板.md",
+            "Task Title",
+            "Task Board.md",
             "Codex Fixer",
             "gpt-5-codex",
         )
@@ -276,16 +276,16 @@ class RecordReviewWorkflowTest(unittest.TestCase):
         record_review.record_review(
             vault,
             "Gix",
-            "任务标题",
+            "Task Title",
             "Codex Reviewer",
             "gpt-5-codex",
-            "通过",
-            "无",
+            "Pass",
+            "None",
             decision="pass",
-            board_name="任务看板.md",
+            board_name="Task Board.md",
         )
 
-        self.assertIn("| Codex Reviewer | gpt-5-codex | 通过 | 无 |", note_path.read_text(encoding="utf-8"))
+        self.assertIn("| Codex Reviewer | gpt-5-codex | Pass | None |", note_path.read_text(encoding="utf-8"))
 
     def test_review_decision_is_atomic_when_board_write_fails(self):
         from unittest import mock
@@ -299,13 +299,13 @@ class RecordReviewWorkflowTest(unittest.TestCase):
                 record_review.record_review(
                     vault,
                     "Gix",
-                    "任务标题",
+                    "Task Title",
                     "Codex Reviewer",
                     "gpt-5-codex",
-                    "通过",
-                    "无",
+                    "Pass",
+                    "None",
                     decision="pass",
-                    board_name="任务看板.md",
+                    board_name="Task Board.md",
                 )
 
         self.assertEqual(original_note, note_path.read_text(encoding="utf-8"))

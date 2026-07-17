@@ -14,7 +14,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 ASSETS = SKILL_ROOT / "assets"
 INVALID_PROJECT_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-DEFAULT_BOARD_NAME = "任务看板.md"
+DEFAULT_BOARD_NAME = "Task Board.md"
 
 
 def read_text(path: Path) -> str:
@@ -50,8 +50,8 @@ def safe_board_name(name: str) -> str:
         raise ValueError("board name cannot be . or ..")
     if INVALID_FILENAME_CHARS.search(cleaned):
         raise ValueError("board name must be a single markdown file name and cannot contain path separators")
-    if not cleaned.endswith("任务看板.md"):
-        raise ValueError("board name must match '*任务看板.md'")
+    if not cleaned.endswith("Task Board.md"):
+        raise ValueError("board name must match '*Task Board.md'")
     return cleaned
 
 
@@ -62,16 +62,16 @@ def init_project(vault_path: Path, project_name: str, board_name: str, overwrite
     project_root = vault_path / project_name
 
     created_or_touched = [
-        project_root / "文档",
-        project_root / "任务",
-        project_root / "任务" / "Tasks",
+        project_root / "Docs",
+        project_root / "Planning",
+        project_root / "Planning" / "Tasks",
     ]
     for folder in created_or_touched:
         folder.mkdir(parents=True, exist_ok=True)
 
     board_template = read_text(ASSETS / "kanban-template.md")
     board = board_template.replace("{{PROJECT_NAME}}", project_name)
-    board_path = project_root / "任务" / board_name
+    board_path = project_root / "Planning" / board_name
     write_text(board_path, board, overwrite=overwrite)
 
     return [*created_or_touched, board_path]
@@ -81,7 +81,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vault-path", help="Path to the Obsidian vault root. Defaults to the active Obsidian vault.")
     parser.add_argument("--project-name", required=True, help="Project folder name to create in the vault.")
-    parser.add_argument("--board-name", default=DEFAULT_BOARD_NAME, help="Board file name, matching '*任务看板.md'.")
+    parser.add_argument("--board-name", default=DEFAULT_BOARD_NAME, help="Board file name, matching '*Task Board.md'.")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing board file.")
     args = parser.parse_args()
 
