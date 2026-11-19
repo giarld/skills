@@ -1,0 +1,3 @@
+interface:
+  display_name: "ImageGen OpenAI"
+  short_description: "Generate, edit, stream, and batch images with live discovery"

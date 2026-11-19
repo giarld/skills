@@ -9,14 +9,11 @@ Reusable agent skills and helper scripts for common automation workflows.
 | `battle-memory` | Store, distill, refine, and compress project task memory with redaction safeguards | `battle-memory/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill battle-memory` |
 | `bilibili-video` | Fetch Bilibili metadata, hot comments, videos, and cover images | `bilibili-video/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill bilibili-video` |
 | `chrome-devtools` | Use Chrome DevTools via MCP for browser automation, debugging, network inspection, and performance analysis | `chrome-devtools/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill chrome-devtools` |
-| `hermes-agent-api` | Call a Hermes Agent API server over its OpenAI-compatible HTTP interface for chat, responses, and long-running jobs | `hermes-agent-api/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill hermes-agent-api` |
-| `codex-opencode-client` | Delegate bounded implementation work from Codex to OpenCode with a contract-first workflow | `codex-opencode-client/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill codex-opencode-client` |
+| `imagegen-openai` | Generate and edit images through OpenAI or a compatible API, with streaming and batch support | `imagegen-openai/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill imagegen-openai` |
 | `make-pdf` | Generate a compilable LaTeX document and final PDF from mixed source materials | `make-pdf/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill make-pdf` |
 | `multica-cli` | Interact with Multica CLI for workspaces, issues, agents, daemon, runtimes, and automation | `multica-cli/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill multica-cli` |
-| `nano-banana-2` | Generate or edit images through OpenRouter using Gemini image preview | `nano-banana-2/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill nano-banana-2` |
 | `obsidian-project-workflow` | Operate an Obsidian-backed project workflow with Kanban boards, task notes, and vault-aware helper scripts | `obsidian-project-workflow/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill obsidian-project-workflow` |
-| `openrouter-video-gen` | Generate videos through OpenRouter with model discovery, async polling, and download helpers | `openrouter-video-gen/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill openrouter-video-gen` |
-| `remove-background` | Remove image backgrounds for single images or whole directories | `remove-background/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill remove-background` |
+| `videogen-h3` | Generate, regenerate, track, and download videos through the MiniMax H3 V2 API | `videogen-h3/SKILL.md` | `npx skills add https://github.com/giarld/skills --skill videogen-h3` |
 
 ## Skill Details
 
@@ -114,64 +111,16 @@ npx skills add https://github.com/giarld/skills --skill chrome-devtools
 cat chrome-devtools/mcp-config.example.json
 ```
 
-### `hermes-agent-api`
+### `imagegen-openai`
 
-Call a Hermes Agent API server over its OpenAI-compatible HTTP interface.
-Official docs: [Hermes API Server user guide (zh-Hans)](https://hermes-agent.nousresearch.com/docs/zh-Hans/user-guide/features/api-server).
-
-- Install:
+Generate or edit images through OpenAI or an OpenAI-compatible provider using Python 3.8+ (no third-party packages required). The helper supports model discovery, reference and masked edits, streaming previews, Responses, and Batch where the selected provider and model support them.
 
 ```bash
-npx skills add https://github.com/giarld/skills --skill hermes-agent-api
+npx skills add https://github.com/giarld/skills --skill imagegen-openai
+python imagegen-openai/scripts/imagegen.py --help
 ```
 
-- Entry files:
-  - `hermes-agent-api/SKILL.md`
-  - `hermes-agent-api/scripts/hermes_api.py`
-  - `hermes-agent-api/references/api.md`
-- Features:
-  - health check, list models, and inspect capabilities
-  - send prompts via Chat Completions (`/v1/chat/completions`)
-  - send prompts via Responses API (`/v1/responses`) with conversation continuity
-  - submit and poll long-running jobs via `/v1/runs`
-  - support `--raw` for debugging response bodies
-- Required environment variables:
-  - `HERMES_BASE_URL`
-  - `HERMES_API_KEY`
-  - `HERMES_MODEL`
-
-Quick examples:
-
-```bash
-python hermes-agent-api/scripts/hermes_api.py health
-python hermes-agent-api/scripts/hermes_api.py chat --prompt "Reply with exactly: pong"
-python hermes-agent-api/scripts/hermes_api.py response --input "What files are in this project?"
-python hermes-agent-api/scripts/hermes_api.py run --input "Inspect the repo and propose a refactor plan." --wait
-```
-
-### `codex-opencode-client`
-
-Define a contract-first delegation workflow between Codex and OpenCode.
-
-- Install:
-
-```bash
-npx skills add https://github.com/giarld/skills --skill codex-opencode-client
-```
-
-- Entry files:
-  - `codex-opencode-client/SKILL.md`
-- Features:
-  - scope a bounded task before delegation
-  - standardize acceptance criteria and audit guidance
-  - support plain OpenCode and `oh-my-opencode` runtimes
-
-Typical use case:
-
-```text
-Use this skill when Codex should delegate a tightly scoped coding task to
-OpenCode, while keeping final acceptance and review on the Codex side.
-```
+Set `IMAGEGEN_OPENAI_API_KEY` in the execution environment for live requests. Optionally set `IMAGEGEN_OPENAI_API_BASE_URL` to the complete API base of a compatible provider. Model IDs and capabilities are evaluated for the configured provider and endpoint. See [SKILL.md](imagegen-openai/SKILL.md) for selection and discovery, and [API examples](imagegen-openai/references/api.md) for request formats.
 
 ### `make-pdf`
 
@@ -231,47 +180,6 @@ multica daemon status --output json
 multica issue list --limit 20 --output json
 ```
 
-### `nano-banana-2`
-
-Generate or edit images through OpenRouter with Gemini image preview.
-
-- Install:
-
-```bash
-npx skills add https://github.com/giarld/skills --skill nano-banana-2
-```
-
-- Entry files:
-  - `nano-banana-2/SKILL.md`
-  - `nano-banana-2/scripts/generate_image.py`
-  - `nano-banana-2/assets/SYSTEM_TEMPLATE`
-- Features:
-  - prompt-only image generation
-  - single-image editing
-  - multi-image composition with up to 14 inputs
-  - saves local output files and prints `MEDIA: <path>`
-- Required environment variables:
-  - `OPENROUTER_API_KEY`
-
-Quick examples:
-
-```bash
-python3 nano-banana-2/scripts/generate_image.py \
-  --prompt "A cinematic banana-shaped spaceship landing in a desert" \
-  --filename ./images/banana-ship.png
-
-python3 nano-banana-2/scripts/generate_image.py \
-  --prompt "Add a rainbow in the sky, keep everything else unchanged" \
-  --input-image ./input.jpg \
-  --filename ./images/edit.png
-```
-
-Dependencies:
-
-```bash
-python3 -m pip install -U openai
-```
-
 ### `obsidian-project-workflow`
 
 Operate an Obsidian-backed project workflow with `obsidian` CLI and the Obsidian Kanban plugin.
@@ -314,80 +222,16 @@ python3 obsidian-project-workflow/scripts/move_task.py --project-name "项目名
 
 On Windows, use `python` and set `PYTHONUTF8=1` when working with non-ASCII project or task names.
 
-### `openrouter-video-gen`
+### `videogen-h3`
 
-Generate videos through OpenRouter's asynchronous video API.
-
-- Install:
+Generate videos from text, frame images, or multimodal references with the MiniMax H3 V2 API. The Python 3.8+ helper also tracks tasks, downloads completed videos, and regenerates eligible 768P outputs at 2K.
 
 ```bash
-npx skills add https://github.com/giarld/skills --skill openrouter-video-gen
+npx skills add https://github.com/giarld/skills --skill videogen-h3
+python videogen-h3/scripts/h3.py --help
 ```
 
-- Entry files:
-  - `openrouter-video-gen/SKILL.md`
-  - `openrouter-video-gen/scripts/list_video_models.py`
-  - `openrouter-video-gen/scripts/generate_video.py`
-  - `openrouter-video-gen/references/openrouter-video-generation.md`
-- Features:
-  - list current video-capable models from OpenRouter
-  - submit async text-to-video jobs
-  - support image-to-video via `frame_images`
-  - support reference-to-video via `input_references`
-  - poll job status and download generated video files
-- Required environment variables:
-  - `OPENROUTER_VIDEO_API_KEY`
-
-Quick examples:
-
-```bash
-python3 openrouter-video-gen/scripts/list_video_models.py
-
-python3 openrouter-video-gen/scripts/generate_video.py \
-  --model google/veo-3.1 \
-  --prompt "A cinematic aerial shot of mist rolling through steep green mountains at sunrise" \
-  --resolution 720p \
-  --aspect-ratio 16:9 \
-  --filename ./outputs/mountains.mp4
-```
-
-Dependencies:
-
-```bash
-python3 --version
-```
-
-### `remove-background`
-
-Remove image backgrounds for a single file or an entire directory.
-
-- Install:
-
-```bash
-npx skills add https://github.com/giarld/skills --skill remove-background
-```
-
-- Entry files:
-  - `remove-background/SKILL.md`
-  - `remove-background/remove_background.py`
-- Supports:
-  - `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp`, `.tif`, `.tiff`
-- Output:
-  - transparent PNG files for single-file and batch workflows
-
-Quick examples:
-
-```bash
-python3 remove-background/remove_background.py "input.jpg" "output.png"
-python3 remove-background/remove_background.py "input_dir" "output_dir"
-python3 remove-background/remove_background.py "input_dir" "output_dir" --recursive
-```
-
-Dependencies:
-
-```bash
-python3 -m pip install rembg Pillow
-```
+Set `VIDEOGEN_H3_API_KEY` in the execution environment for live requests. Optionally set `VIDEOGEN_H3_API_BASE_URL` to a compatible base URL. See [SKILL.md](videogen-h3/SKILL.md) for model selection and the workflow, and [API examples](videogen-h3/references/api.md) for request formats.
 
 ## Repository Layout
 
@@ -403,10 +247,10 @@ python3 -m pip install rembg Pillow
 |-- chrome-devtools/
 |   |-- SKILL.md
 |   `-- mcp-config.example.json
-|-- codex-opencode-client/
-|   `-- SKILL.md
-|-- hermes-agent-api/
+|-- imagegen-openai/
+|   |-- LICENSE
 |   |-- SKILL.md
+|   |-- agents/
 |   |-- references/
 |   `-- scripts/
 |-- make-pdf/
@@ -416,10 +260,6 @@ python3 -m pip install rembg Pillow
 |   |-- SKILL.md
 |   |-- agents/
 |   `-- references/
-|-- nano-banana-2/
-|   |-- SKILL.md
-|   |-- assets/
-|   `-- scripts/
 |-- obsidian-project-workflow/
 |   |-- SKILL.md
 |   |-- README.md
@@ -427,13 +267,12 @@ python3 -m pip install rembg Pillow
 |   |-- assets/
 |   |-- references/
 |   `-- scripts/
-|-- openrouter-video-gen/
-|   |-- SKILL.md
-|   |-- references/
-|   `-- scripts/
-`-- remove-background/
+`-- videogen-h3/
+    |-- LICENSE
     |-- SKILL.md
-    `-- remove_background.py
+    |-- agents/
+    |-- references/
+    `-- scripts/
 ```
 
 ## Notes
